@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+import random
 
 
 class Sheet:
@@ -13,6 +13,7 @@ class Sheet:
         if position is not None:
             piece.position = position
             self.pieces.append(piece)
+            self.draw()#her parcayi ekledikten sonra yazdirdim.
             
 
     def find_bottom_left_position(self, piece):
@@ -65,7 +66,7 @@ class Piece:
         self.position = None
 
 
-def best_fit_algorithm(sheet_size, piece_sizes):
+def blf_algorithm(sheet_size, piece_sizes):
     sheet = Sheet(sheet_size)
 
     for size in piece_sizes:
@@ -74,13 +75,22 @@ def best_fit_algorithm(sheet_size, piece_sizes):
 
     return sheet
 
+def blf_algorithm_custom_order(sheet_size, piece_sizes, order):
+    sheet = Sheet(sheet_size)
+    
+    for piece_index in order:
+        size = piece_sizes[piece_index]
+        piece = Piece(size[0], size[1])
+        sheet.fit_piece(piece)
+    return sheet
+
 
 # # Example data
 # sheet_size_example = (20, 20)
 # piece_sizes_example = [(2, 12), (7, 12), (8, 6), (3, 6), (3, 5), (5, 5), (3, 12), (3, 7), (5, 7), (2, 6), (3, 2),
 #                        (4, 2), (3, 4), (4, 4), (9, 2), (11, 2)]
 #
-file_name = 'C1_1'
+file_name = 'C1_2'
 file_path = 'original/' + file_name
 
 try:
@@ -98,11 +108,20 @@ except IOError as e:
     print(f"An error occurred while reading the file: {e}")
 
 
+print(piece_number)
+order = list(range(piece_number))
+random.shuffle(order)
+print("Shuffled numbers:", order)
 
-result_sheet = best_fit_algorithm(sheet_size, pieces)
+
+#result_sheet = blf_algorithm(sheet_size, pieces)
+result_sheet = blf_algorithm_custom_order(sheet_size, pieces, order)
+
 
 print("Sheet:")
 for piece in result_sheet.pieces:
     print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
-
+    
+    
+print(f'Result set length:{len(result_sheet.pieces)}')
 result_sheet.draw()
