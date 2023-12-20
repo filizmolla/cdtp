@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec 20 19:10:45 2023
-
-@author: filiz
-"""
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import random

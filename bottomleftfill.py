@@ -1,49 +1,108 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def plot_cutting_stock(stock_dimensions, stock_pieces):
-    fig, ax = plt.subplots()
-    ax.set_xlim([0, stock_dimensions[0]])
-    ax.set_ylim([0, stock_dimensions[1]])
 
-    for piece_list in stock_pieces:
-        for piece in piece_list:
-            rect = patches.Rectangle((piece[2], piece[3]), piece[0], piece[1], linewidth=1, edgecolor='r', facecolor='none')
-            ax.add_patch(rect)
 
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.show()
+class Sheet:
+    def __init__(self, size):
+        self.size = size
+        self.pieces = []
 
-def bottom_left_fill_2d(stock_dimensions, demand_dimensions):
-    demand_dimensions.sort(key=lambda x: x[0], reverse=True)  # Talep boyutlarını büyükten küçüğe sırala
-    stock_pieces = []  # Kesilmiş parçaları tutacak liste
+    def fit_piece(self, piece):
+        position = self.find_bottom_left_position(piece)
+        if position is not None:
+            piece.position = position
+            self.pieces.append(piece)
+            
 
-    while demand_dimensions:
-        stock_piece = []  # Bir stok parçası oluştur
+    def find_bottom_left_position(self, piece):
+        for i in range(self.size[0]):
+            for j in range(self.size[1]):
+                if self.can_fit(piece, i, j):
+                    return i, j
+        return None
 
-        for demand_dim in demand_dimensions:
-            if can_fit(stock_dimensions, stock_piece, demand_dim):
-                stock_piece.append((demand_dim[0], demand_dim[1], stock_dimensions[0] - sum(p[0] for p in stock_piece), max((p[1] for p in stock_piece), default=0)))
+    def can_fit(self, piece, i, j):
+        for existing_piece in self.pieces:
+            if existing_piece.position and self.overlaps(piece, existing_piece, i, j):
+                return False
+        return True
 
-        if stock_piece:
-            stock_pieces.append(stock_piece)  # Stok parçasını listeye ekle
-            # Sadece bir kere çıkar
-            demand_dimensions = [dim for dim in demand_dimensions if dim != stock_piece[0]]
+    def overlaps(self, piece1, piece2, i, j):
+        pos1 = piece1.position
+        pos2 = piece2.position
+        return not (i + piece1.width <= pos2[0] or j + piece1.height <= pos2[1] or
+                    i >= pos2[0] + piece2.width or j >= pos2[1] + piece2.height)
+    
+    def draw(self):
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, self.size[0])  
+        ax.set_ylim(0, self.size[1])      
+        for piece in self.pieces:
+            if piece.position is not None:
+                rect = patches.Rectangle(
+                    (piece.position[0], piece.position[1]),  
+                    piece.width,
+                    piece.height,
+                    linewidth=1,
+                    edgecolor='r',
+                    facecolor='#FFE4C4'
+                    )
+                ax.add_patch(rect)
 
-    return stock_pieces
+        # Debugging information
+        #print("Sheet size:", self.size)
+        #for piece in self.pieces:
+        #    print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+        plt.title(f'{file_name}')
 
-def can_fit(stock_dimensions, stock_piece, demand_dim):
-    remaining_width = stock_dimensions[0] - sum(p[0] for p in stock_piece)
-    remaining_height = stock_dimensions[1] - max((p[1] for p in stock_piece), default=0)
+        plt.show()
 
-    return remaining_width >= demand_dim[0] and remaining_height >= demand_dim[1]
+class Piece:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.position = None
 
-# Örnek kullanım
-stock_dimensions = (10, 5)
-demand_dimensions = [(4, 3), (3, 2), (2, 1), (1, 1)]
 
-result = bottom_left_fill_2d(stock_dimensions, demand_dimensions)
-print("Optimal stock pieces:", result)
+def best_fit_algorithm(sheet_size, piece_sizes):
+    sheet = Sheet(sheet_size)
 
-# Görselleştirme
-plot_cutting_stock(stock_dimensions, result)
+    for size in piece_sizes:
+        piece = Piece(size[0], size[1])
+        sheet.fit_piece(piece)
+
+    return sheet
+
+
+# # Example data
+# sheet_size_example = (20, 20)
+# piece_sizes_example = [(2, 12), (7, 12), (8, 6), (3, 6), (3, 5), (5, 5), (3, 12), (3, 7), (5, 7), (2, 6), (3, 2),
+#                        (4, 2), (3, 4), (4, 4), (9, 2), (11, 2)]
+#
+file_name = 'C1_1'
+file_path = 'original/' + file_name
+
+try:
+    with open(file_path, 'r') as file:
+        piece_number = int(file.readline().strip())
+        sheet_size = tuple(map(int, file.readline().split()))
+        pieces = [tuple(map(int, line.split())) for line in file]
+
+    print("piece_number =", piece_number)
+    print("sheet_size =", sheet_size)
+    print("pieces =", pieces)
+except FileNotFoundError:
+    print(f"The file '{file_path}' does not exist.")
+except IOError as e:
+    print(f"An error occurred while reading the file: {e}")
+
+
+
+result_sheet = best_fit_algorithm(sheet_size, pieces)
+
+print("Sheet:")
+for piece in result_sheet.pieces:
+    print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+
+result_sheet.draw()
