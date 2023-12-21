@@ -2,55 +2,19 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import random
 import numpy as np
-import time 
-import sys, logging
-
-class SFLA:
-    def __init__(self, frogs, mplx_no, no_of_iteration, no_of_mutation, q, sheet):
-        self.frogs = frogs
-        self.mplx_no = mplx_no
-        self.FrogsEach = int(self.frogs/self.mplx_no)
-        self.weights = [2*(self.FrogsEach + 1 - j)/(self.FrogsEach * (self.FrogsEach+1)) for j in range(1, self.FrogsEach+1)] 
-        self.no_of_iteration = no_of_iteration
-        self.no_of_mutation = no_of_mutation
-        self.q = q
-        self.sheet = sheet
-        #self.bins_data = BinPackingSolutions()
-        #self.rng = np.random.default_rng(98765)
-        
-    def __repr__(self):
-        return f"SFLA (Frogs = {self.frogs}, Memeplexes = {self.mplx_no})"
-    
-    def __str__(self):
-        return f"SFLA (Frogs = {self.frogs}, Memeplexes = {self.mplx_no})"
-    
-    @property
-    def memeplexes(self) -> np.ndarray:
-        return self._memeplexes
-    
-    @memeplexes.setter
-    def memeplexes(self, memeplexes: np.ndarray):
-        self._memeplexes = memeplexes
-
-    def find_score():
-        #Computes a score for a given bin solution. Benimki --> height
-
-        return 0
-    
-    def generate_one_frog(self):
-        # Generates a frog using a best-fit heuristic and computes its score.
-        # Benimki --> Bottom Left Heurristic 
-        
-        
-        
-
-        return 
-
 
 class Sheet:
     def __init__(self, size):
         self.size = size
         self.pieces = []
+        self.no_of_pieces = len(self.pieces)
+        self.score = -1
+
+    def __repr__(self):
+        return f"SheetDetails (Score = {self.score}, No_of_pieces = {self.no_of_pieces})"
+    
+    def __str__(self):
+        return f"SheetDetails (Score = {self.score}, No_of_pieces = {self.no_of_pieces})"
 
     def fit_piece(self, piece):
         position = self.find_bottom_left_position(piece)
@@ -88,7 +52,8 @@ class Sheet:
                 right_edge_distance = max(right_edge_distance, piece.position[0] + piece.width)
                 top_edge_distance = max(top_edge_distance, piece.position[1] + piece.height)
 
-
+        print(f"En sağdaki dikdörtgenin en sağ kenarı: {right_edge_distance}")
+        print(f"En yukarıdaki dikdörtgenin en üst kenarı: {top_edge_distance}")
         return right_edge_distance, top_edge_distance
 
     
@@ -109,79 +74,130 @@ class Sheet:
                 ax.add_patch(rect)
 
         # Debugging information
-        #print("Sheet size:", self.size)
-        #for piece in self.pieces:
-        #    print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+        print("Sheet size:", self.size)
+        for piece in self.pieces:
+            print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
         plt.title(f'{file_name}')
 
         plt.show()
 
 class Piece:
     def __init__(self, width, height):
-        self.width = width
-        self.height = height
+        self.width = width #if width < height else height       #kareleri döndürmek için kullandım
+        self.height = height #if width < height else width
         self.position = None
+        
 
 
-def blf_algorithm(sheet_size, piece_sizes):
-    sheet = Sheet(sheet_size)
-
-    for size in piece_sizes:
-        piece = Piece(size[0], size[1])
-        sheet.fit_piece(piece)
-
-    return sheet
-
-def blf_algorithm_custom_order(sheet_size, piece_sizes, order):
-    sheet = Sheet(sheet_size)
+class CuttingStockSolutions:
+    def __init__(self):
+        self.sheet_size = (20, 20)
+        self.sheet = Sheet(self.sheet_size)
+        self.pieces = None
+        self.order = [5, 14, 0, 2, 13, 7, 6, 3, 9, 8, 12, 1, 15, 11, 10, 4]
+        self.no_of_pieces = 16
+        self.rng = np.random.default_rng(12345)
+        
+    def __repr__(self):
+        return f"CuttingStockSolutions (No_of_items = {self.no_of_items}, Max_bin_capacity = {self.max_bin_capacity})"
     
-    for piece_index in order:
-        size = piece_sizes[piece_index]
-        piece = Piece(size[0], size[1])
-        sheet.fit_piece(piece)
-    return sheet
+    def __str__(self):
+        return f"CuttingStockSolutions (No_of_items = {self.no_of_items}, Max_bin_capacity = {self.max_bin_capacity})"
+    
+    def extract_from_file(self, file_path, file_name):
+        try:
+            with open(file_path, 'r') as file:
+                piece_count = int(file.readline().strip())
+                sheet_size = tuple(map(int, file.readline().split()))
+                pieces = [tuple(map(int, line.split())) for line in file]
+
+            print("piece_number =", piece_count)
+            print("sheet_size =", sheet_size)
+            print("pieces =", pieces)
+        except FileNotFoundError:
+            print(f"The file '{file_path}' does not exist.")
+        except IOError as e:
+            print(f"An error occurred while reading the file: {e}")
+        
+        self.no_of_pieces = piece_count
+        self.sheet_size = sheet_size
+        self.sheet = Sheet(sheet_size)
+        self.pieces = pieces
+        
+    def blf_algorithm(self):
+        sheet_size = self.sheet_size
+        piece_sizes = self.pieces
+        
+        sheet = Sheet(sheet_size)
+
+        for size in piece_sizes:
+            piece = Piece(size[0], size[1])
+            sheet.fit_piece(piece)
+        self.sheet=sheet
+        print(f'Result set length:{len(sheet.pieces)}')
+        sheet.draw()
+        self.set_score()
+        print(f'Skor={self.sheet.score}')
+        
+        return sheet
 
 
+    def blf_algorithm_custom_order(self):
+        sheet_size = self.sheet_size
+        piece_sizes = self.pieces
+        order = list(range(self.no_of_pieces))  #16 parca var, 1den 16ya kadar array uret onları karistir.
+        random.shuffle(order)
+        self.order = order
+        print("Shuffled numbers:", order)
+        sheet = Sheet(sheet_size)
+        
+        for piece_index in order:
+            size = piece_sizes[piece_index]
+            piece = Piece(size[0], size[1])
+            sheet.fit_piece(piece)
+            
+        self.sheet = sheet
+        print(f'Result set length:{len(sheet.pieces)}')
+        sheet.draw()
+        self.set_score()
+        print(f'Skor={self.sheet.score}')
+        return sheet
+    
+    def set_score(self):
+        # Tüm parçalar yerleştirildikten sonra kenar uzaklıklarını al
+        right_edge, top_edge = self.sheet.get_sheet_edges_distances()
+        print(f"En sağ: {right_edge}")
+        print(f"En yukarısı: {top_edge}")
+        sheet_width = self.sheet_size[0]
+        sheet_height = self.sheet_size[1]
+        
+        
+        if right_edge > sheet_width and top_edge > sheet_height :
+            self.sheet.score = 0
+        elif right_edge > sheet_width and top_edge <= sheet_height :
+            self.sheet.score = 1
+        elif top_edge > sheet_height and right_edge <= sheet_width : 
+            self.sheet.score = 2
+        else:
+            self.sheet.score = 3
+
+        
 
 
-file_name = 'C1_1'
+file_name = 'C2_1'
 file_path = 'original/' + file_name
 
-try:
-    with open(file_path, 'r') as file:
-        piece_number = int(file.readline().strip())
-        sheet_size = tuple(map(int, file.readline().split()))
-        pieces = [tuple(map(int, line.split())) for line in file]
-
-    print("piece_number =", piece_number)
-    print("sheet_size =", sheet_size)
-    print("pieces =", pieces)
-except FileNotFoundError:
-    print(f"The file '{file_path}' does not exist.")
-except IOError as e:
-    print(f"An error occurred while reading the file: {e}")
 
 
-print(piece_number)
-order = list(range(piece_number))
-random.shuffle(order)
-print("Shuffled numbers:", order)
 
-#result_sheet = blf_algorithm(sheet_size, pieces)
-result_sheet = blf_algorithm_custom_order(sheet_size, pieces, order)
+csp = CuttingStockSolutions()
+csp.extract_from_file(file_path, file_name)
+csp.blf_algorithm_custom_order()
 
-print("Sheet:")
-for piece in result_sheet.pieces:
-    print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+
+
+
+
     
 
-# Tüm parçalar yerleştirildikten sonra kenar uzaklıklarını al
-right_edge, top_edge = result_sheet.get_sheet_edges_distances()
-
-print(f"En sağdaki dikdörtgenin en sağ kenarı: {right_edge}")
-print(f"En yukarıdaki dikdörtgenin en üst kenarı: {top_edge}")
-    
-    
-print(f'Result set length:{len(result_sheet.pieces)}')
-result_sheet.draw()
 
