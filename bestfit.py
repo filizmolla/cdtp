@@ -1,4 +1,7 @@
 import turtle
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import random
 
 class Sheet:
     def __init__(self, size):
@@ -42,24 +45,31 @@ class Sheet:
             waste_height = j + piece.height
 
         return waste_width * waste_height
-
+        
     def draw(self):
-        turtle.clear()
-        turtle.penup()
-        turtle.goto(-self.size[0] // 2, self.size[1] // 2)
-
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, self.size[0] * 1.5)  
+        ax.set_ylim(0, self.size[1] * 1.5)      
         for piece in self.pieces:
             if piece.position is not None:
-                turtle.penup()
-                turtle.goto(piece.position[0] - self.size[0] // 2, self.size[1] // 2 - piece.position[1])
-                turtle.pendown()
-                for _ in range(2):
-                    turtle.forward(piece.width)
-                    turtle.right(90)
-                    turtle.forward(piece.height)
-                    turtle.right(90)
+                rect = patches.Rectangle(
+                        (piece.position[0], piece.position[1]),  
+                        piece.width,
+                        piece.height,
+                        linewidth=1,
+                        edgecolor='r',
+                        facecolor='#FFE4C4'
+                        )
+                ax.add_patch(rect)
 
-        turtle.update()
+            # Debugging information
+            #print("Sheet size:", self.size)
+            #for piece in self.pieces:
+            #    print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+        plt.title(f'{file_name}')
+
+        plt.show()
+
 
 
 class Piece:
@@ -85,7 +95,9 @@ def best_fit_algorithm(sheet_size, piece_sizes):
 #                        (4, 2), (3, 4), (4, 4), (9, 2), (11, 2)]
 #
 
-file_path = 'original/C1_1'
+
+file_name = 'C4_1'
+file_path = 'original/' + file_name
 
 try:
     with open(file_path, 'r') as file:
@@ -102,9 +114,6 @@ except IOError as e:
     print(f"An error occurred while reading the file: {e}")
 
 
-# Set up Turtle screen coordinates
-turtle.setworldcoordinates(-sheet_size[0] // 2, -sheet_size[1] // 2,
-                           sheet_size[0] // 2, sheet_size[1] // 2)
 
 result_sheet = best_fit_algorithm(sheet_size, pieces)
 
@@ -113,4 +122,3 @@ for piece in result_sheet.pieces:
     print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
 
 result_sheet.draw()
-turtle.done()
