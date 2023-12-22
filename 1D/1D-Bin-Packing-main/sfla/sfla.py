@@ -250,6 +250,8 @@ class SFLA:
                 memeplexes[i, j] = sorted_fitness[i + (self.mplx_no*j)]
         return memeplexes
     
+    
+    
     def new_step(self, best_frog: BinDetails, worst_frog: BinDetails):
         """Calculates next step
         Args:
@@ -343,8 +345,11 @@ class SFLA:
         s1 = time.time()
         self.generate_init_population()
         self.memeplexes = self.sort_frog()
+        print("offmkk")
+        print(self.memeplexes)
+        
         for idx in range(self.no_of_iteration):
-            logger.info(f"Local Search: {idx+1}/{self.no_of_iteration}")
+            logger.info(f"Local Search: {idx+1}/{self.no_of_iteration}") 
             self.local_search(idx+1)
             self.shuffle_memeplexes()
         e1 = time.time()
@@ -370,6 +375,6 @@ if __name__ == "__main__":
     # path = "./../data/bin2data/N2W1B1R7.BPP"
     # path = "./../data/bin2data/N3W1B3R0.BPP"
     # path = "./../data/bin2data/N1W1B1R5.BPP"
-    path = "./data2.bpp"
-    sfla = SFLA(frogs=250, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
+    path = "./data1.bpp"
+    sfla = SFLA(frogs=40, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
     sfla.run_sfla(path)

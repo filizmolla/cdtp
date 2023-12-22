@@ -91,6 +91,7 @@ class Piece:
 
 class CuttingStockSolutions:
     def __init__(self):
+        self.sheet_solutions: dict[int, Sheet] = {}
         self.sheet_size = (20, 20)
         self.sheet = Sheet(self.sheet_size)
         self.pieces = None
@@ -157,7 +158,7 @@ class CuttingStockSolutions:
             sheet.fit_piece(piece)
             
         self.sheet = sheet
-        print(f'Result set length:{len(sheet.pieces)}')
+        #print(f'Result set length:{len(sheet.pieces)}')
         sheet.draw()
         self.set_score()
         print(f'Skor={self.sheet.score}')
@@ -166,8 +167,7 @@ class CuttingStockSolutions:
     def set_score(self):
         # Tüm parçalar yerleştirildikten sonra kenar uzaklıklarını al
         right_edge, top_edge = self.sheet.get_sheet_edges_distances()
-        print(f"En sağ: {right_edge}")
-        print(f"En yukarısı: {top_edge}")
+        print(f"En sağ: {right_edge} En yukarı: {top_edge}")
         sheet_width = self.sheet_size[0]
         sheet_height = self.sheet_size[1]
         
@@ -182,13 +182,7 @@ class CuttingStockSolutions:
             self.sheet.score = 3
 
 
-
-        
-        
-        
-
-
-file_name = 'C0_0'
+file_name = 'C1_1'
 file_path = 'original/' + file_name
 
 
@@ -198,8 +192,8 @@ csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
 csp.blf_algorithm_custom_order()
 
-for i in range(10):
-    csp.blf_algorithm_custom_order()
+#for i in range(10):
+#    csp.blf_algorithm_custom_order()
 
 
 
