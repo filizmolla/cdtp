@@ -21,7 +21,7 @@ class Sheet:
         if position is not None:
             piece.position = position
             self.pieces.append(piece)
-            self.draw()#her parcayi ekledikten sonra yazdirdim.
+            #self.draw()  #her parcayi ekledikten sonra yazdirdim.
             
 
     def find_bottom_left_position(self, piece):
@@ -52,8 +52,8 @@ class Sheet:
                 right_edge_distance = max(right_edge_distance, piece.position[0] + piece.width)
                 top_edge_distance = max(top_edge_distance, piece.position[1] + piece.height)
 
-        print(f"En sağdaki dikdörtgenin en sağ kenarı: {right_edge_distance}")
-        print(f"En yukarıdaki dikdörtgenin en üst kenarı: {top_edge_distance}")
+        #print(f"En sağdaki dikdörtgenin en sağ kenarı: {right_edge_distance}")
+        #print(f"En yukarıdaki dikdörtgenin en üst kenarı: {top_edge_distance}")
         return right_edge_distance, top_edge_distance
 
     
@@ -74,9 +74,9 @@ class Sheet:
                 ax.add_patch(rect)
 
         # Debugging information
-        print("Sheet size:", self.size)
-        for piece in self.pieces:
-            print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
+        #print("Sheet size:", self.size)
+        #for piece in self.pieces:
+            #print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
         plt.title(f'{file_name}')
 
         plt.show()
@@ -111,9 +111,9 @@ class CuttingStockSolutions:
                 sheet_size = tuple(map(int, file.readline().split()))
                 pieces = [tuple(map(int, line.split())) for line in file]
 
-            print("piece_number =", piece_count)
-            print("sheet_size =", sheet_size)
-            print("pieces =", pieces)
+            #print("piece_number =", piece_count)
+            #print("sheet_size =", sheet_size)
+            #print("pieces =", pieces)
         except FileNotFoundError:
             print(f"The file '{file_path}' does not exist.")
         except IOError as e:
@@ -181,10 +181,14 @@ class CuttingStockSolutions:
         else:
             self.sheet.score = 3
 
+
+
+        
+        
         
 
 
-file_name = 'C2_1'
+file_name = 'C0_0'
 file_path = 'original/' + file_name
 
 
@@ -194,7 +198,8 @@ csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
 csp.blf_algorithm_custom_order()
 
-
+for i in range(10):
+    csp.blf_algorithm_custom_order()
 
 
 
