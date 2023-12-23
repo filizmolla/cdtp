@@ -125,7 +125,7 @@ class SFLA:
         for key, value in extracted_bin_sols.items():
             print(f"Bin ID: {key}, Bin Solution: {value}")
         for bin_id, sheet_details in extracted_bin_sols.items():
-            print(f"Bin ID: {bin_id}, Score: {sheet_details.Score}, No_of_pieces: {sheet_details.No_of_pieces}")
+            print(f"Bin ID: {bin_id}, Score: {sheet_details.score}, No_of_pieces: {sheet_details.no_of_pieces}")
 
 
         for idx in range(self.no_of_mutation):

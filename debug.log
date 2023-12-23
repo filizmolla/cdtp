@@ -31397,3 +31397,13 @@
 2023-12-23 00:15:41,871 [__main__: INFO] Generating initial population (Number of frogs: 40)
 2023-12-23 00:15:46,322 [__main__: INFO] Sorting the frogs and making 5 memeplexes with 40 frogs each
 2023-12-23 00:15:46,323 [__main__: INFO] Local Search: 1/100
+2023-12-23 13:44:21,892 [__main__: INFO] Starting SFLA algorithm
+2023-12-23 13:44:21,894 [__main__: INFO] Generating initial population (Number of frogs: 40)
+2023-12-23 13:44:26,185 [__main__: INFO] Sorting the frogs and making 5 memeplexes with 40 frogs each
+2023-12-23 13:44:26,185 [__main__: INFO] Local Search: 1/100
+2023-12-23 13:49:56,162 [__main__: INFO] Starting SFLA algorithm
+2023-12-23 13:49:56,162 [__main__: INFO] Generating initial population (Number of frogs: 40)
+2023-12-23 13:50:00,623 [__main__: INFO] Sorting the frogs and making 5 memeplexes with 40 frogs each
+2023-12-23 13:50:00,624 [__main__: INFO] Local Search: 1/100
+2023-12-23 13:50:00,624 [__main__: INFO] Iteration 1 -- Local Search of Memeplex 1: Mutation 1/5
+2023-12-23 13:50:00,625 [__main__: INFO] Iteration 1 -- Memeplex 1: Learn from local best Pb

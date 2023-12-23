@@ -8,6 +8,7 @@ class Sheet:
         self.size = size
         self.pieces = []
         self.no_of_pieces = len(self.pieces)
+        self.order = [0, 1, 2, 3]
         self.score = -1
 
     def __repr__(self):
@@ -95,7 +96,6 @@ class CuttingStockSolutions:
         self.sheet_size = (20, 20)
         self.sheet = Sheet(self.sheet_size)
         self.pieces = None
-        self.order = [5, 14, 0, 2, 13, 7, 6, 3, 9, 8, 12, 1, 15, 11, 10, 4]
         self.no_of_pieces = 16
         self.rng = np.random.default_rng(12345)
         
@@ -143,12 +143,12 @@ class CuttingStockSolutions:
         return sheet
 
 
-    def blf_algorithm_custom_order(self):
+    def blf_algorithm_custom_order(self, order=None):
         sheet_size = self.sheet_size
         piece_sizes = self.pieces
-        order = list(range(self.no_of_pieces))  #16 parca var, 1den 16ya kadar array uret onları karistir.
-        random.shuffle(order)
-        self.order = order
+        if order is None: 
+            order = list(range(self.no_of_pieces))
+            random.shuffle(order)
         print("Shuffled numbers:", order)
         sheet = Sheet(sheet_size)
         
@@ -158,6 +158,9 @@ class CuttingStockSolutions:
             sheet.fit_piece(piece)
             
         self.sheet = sheet
+        self.sheet.order = order
+        self.sheet.no_of_pieces  = len(sheet.pieces)
+        
         #print(f'Result set length:{len(sheet.pieces)}')
         sheet.draw()
         self.set_score()
@@ -180,13 +183,15 @@ class CuttingStockSolutions:
             self.sheet.score = 2
         else:
             self.sheet.score = 3
+            
+        self.sheet.score = 1 / top_edge
 
 
 file_name = 'C1_1'
 file_path = 'original/' + file_name
 
 
-
+order=[7, 15, 8, 10, 11, 6, 5, 1, 14, 13, 3, 12, 0, 9, 2, 4]
 
 csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
