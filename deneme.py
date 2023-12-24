@@ -31,17 +31,22 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
     print(f'Random={random_multiplier}')
     new_shift =[abs(number * random_multiplier)for number in subtraction] 
     new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
-
     
     
     print(new_shift)
-  
+    
     
     new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
     
     print(new_order)
     new_order = [round(number) for number in new_order]
     
+    print(len(new_order))
+    counter = [0] * (len(new_order) +1)
+    print(counter)
+    for number in new_order:
+        counter[number] +=1 
+    print(counter)
     
     
     print(new_order)
