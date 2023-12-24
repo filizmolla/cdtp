@@ -28,44 +28,41 @@ missing_numbers = list(reference_set - unique_numbers)
 print("Tekrar eden numaraların indexleri:", duplicate_indexes)
 print("Tekrar eden numaralar:", duplicates)
 print("Eksik numaralar:", missing_numbers)
-
-
 merged = duplicates + missing_numbers
 print(merged)
-
-
 repeating_indexes = [index for indexes in duplicate_indexes.values() if len(indexes) > 1 for index in indexes]
-
 print(repeating_indexes)
 
 
-perm = permutations(repeating_indexes) 
-# Print the obtained permutations 
-#for i in list(perm): 
-    #numbers[i[0]] = 3
-    #numbers[i[1]] = 4
-    #numbers[i[2]] = 6
-    #numbers[i[3]] = 7
-    #print (i)
-    #print(numbers)
 
-for i in list(perm): 
+perm_matrice = np.empty((0, len(numbers)))
+
+perm = permutations(repeating_indexes) 
+
+for i in perm:
     if len(merged) == len(repeating_indexes):
-        for j in range(len(i)):        
-            numbers[i[j]] = merged[j]
-    print (i)
-    print(numbers)
+        modified_numbers = numbers.copy()
+        for j in range(len(i)):
+            modified_numbers[i[j]] = merged[j]
+        perm_matrice = np.vstack([perm_matrice, modified_numbers])
+
+
+print(perm_matrice)
+
 
 #The closest one to the original invalid sequence is selected.
+min_dist = 99999
+min_index = -1
+for index, row in enumerate(perm_matrice):
+    dist = np.linalg.norm(numbers - row)
+    print(dist)
+    if dist < min_dist:
+        min_dist = dist
+        min_index = index
 
-numbers = [1,5,2,4,4,5,7,9,8]
-numbers2 = np.array([1, 5, 2, 4, 3, 6, 7, 9, 8])
-dist = np.linalg.norm(numbers - numbers2)
-print(dist)
 
-
-
-
+new_order = perm_matrice[min_index]
+print(new_order)
 
 
 
