@@ -14,7 +14,7 @@ for index, num in enumerate(numbers):
     if num in unique_numbers:
         duplicates.append(num)
         duplicate_indexes[num].append(index)
-        indexes.append(index)
+
     else:
         unique_numbers.add(num)
         duplicate_indexes[num] = [index]
