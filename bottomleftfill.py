@@ -78,8 +78,10 @@ class Sheet:
         #print("Sheet size:", self.size)
         #for piece in self.pieces:
             #print(f"Piece at position {piece.position} with size {piece.width}x{piece.height}")
-        plt.title(f'{file_name}')
+            
 
+        plt.title(f'{file_name}')
+        plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 
 class Piece:
@@ -188,14 +190,21 @@ class CuttingStockSolutions:
 
 
 file_name = 'C1_1'
+file_name = 'C0_0'
 file_path = 'original/' + file_name
 
 
 order=[7, 15, 8, 10, 11, 6, 5, 1, 14, 13, 3, 12, 0, 9, 2, 4]
+order = [4, 0, 3, 1, 5, 2]
+
+
+
+
 
 csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
-csp.blf_algorithm_custom_order()
+csp.blf_algorithm_custom_order(order)
+
 
 #for i in range(10):
 #    csp.blf_algorithm_custom_order()
