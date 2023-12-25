@@ -81,6 +81,9 @@ class SFLA:
         sorted_fitness = np.array(sorted(
             self.sheet_data.sheet_solutions, key=lambda x: self.sheet_data.sheet_solutions[x].score))
         
+        reversed_fitness = sorted_fitness[::-1]
+        sorted_fitness = reversed_fitness
+        
         memeplexes = np.empty((self.mplx_no, self.FrogsEach))
         for j in range(self.FrogsEach):
             for i in range(self.mplx_no):
@@ -145,7 +148,7 @@ class SFLA:
         perm_matrice = np.empty((0, len(numbers)))
 
         perm = permutations(repeating_indexes) 
-        print()
+        
         
 
         for i in perm:

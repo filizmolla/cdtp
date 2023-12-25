@@ -60,8 +60,8 @@ class Sheet:
     
     def draw(self):
         fig, ax = plt.subplots()
-        ax.set_xlim(-1, self.size[0] * 1.5)  
-        ax.set_ylim(-1, self.size[1] * 1.5)      
+        ax.set_xlim(0, self.size[0] * 1.5)  
+        ax.set_ylim(0, self.size[1] * 1.5)      
         for piece in self.pieces:
             if piece.position is not None:
                 rect = patches.Rectangle(
@@ -185,8 +185,10 @@ class CuttingStockSolutions:
             self.sheet.score = 2
         else:
             self.sheet.score = 3
-            
-        self.sheet.score = 1 / top_edge
+        
+        self.sheet.score = 1 / top_edge + 1 / right_edge
+        if top_edge > sheet_height:
+            self.sheet.score = self.sheet.score / 100
 
 
 file_name = 'C1_1'
@@ -195,15 +197,14 @@ file_path = 'original/' + file_name
 
 
 order=[7, 15, 8, 10, 11, 6, 5, 1, 14, 13, 3, 12, 0, 9, 2, 4]
-order = [4, 0, 3, 1, 5, 2]
-
-
-
+order = [5, 0, 4, 3, 1, 2]
+order = [0, 5, 3, 4, 1, 2]
+order = [3, 4, 5, 0, 1, 2]
 
 
 csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
-csp.blf_algorithm_custom_order(order)
+csp.blf_algorithm_custom_order()
 
 
 #for i in range(10):

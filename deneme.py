@@ -25,8 +25,24 @@ def normalize_numbers_to_range_int(numbers, new_min, new_max):
     
     return normalized_numbers
 
+def permutations_(liste, constraints):
+    result = []
+    if len(liste) == 1: 
+        return [liste.copy()]
 
-def remove_duplicates(order):
+    for i in range(len(liste)):
+        n = liste.pop(0)
+        x = constraints.values()
+        perms = permutations_(liste, constraints)
+        
+        for perm in perms:
+            perm.append(n)
+        result.extend(perms)
+        print(x)
+        liste.append(n)
+    return result
+    
+def remove_duplicates(order, best_frog_order, worst_frog_order):
     print("removing duplicates")
     numbers = np.array(order)
 
@@ -35,12 +51,14 @@ def remove_duplicates(order):
     duplicate_indexes = {}
     missing_numbers = []
     indexes =[]
+    comparison_info = []
+
 
     # Diziyi tarayarak tekrar eden numaraları bul ve unique_numbers kümesine ekle
     for index, num in enumerate(numbers):
         if num in unique_numbers:
             duplicates.append(num)
-            duplicate_indexes[num].append(index)
+            duplicate_indexes.setdefault(num, []).append(index)
         else:
             unique_numbers.add(num)
             duplicate_indexes[num] = [index]
@@ -62,9 +80,25 @@ def remove_duplicates(order):
     
     perm_matrice = np.empty((0, len(numbers)))
 
-    perm = permutations(repeating_indexes) 
-    print()
+    #print(f"REPEATING INDICES {repeating_indexes}")
+    #CHECK OTHER LISTS 
+    constraints = {}
+
+    for index in repeating_indexes:
+        constraints[index] = (best_frog_order[index], worst_frog_order[index])
+
+    print("Comparison Info:", [f"{key}: {value}" for key, value in constraints.items()])
     
+    valid_combinations = []
+
+
+    
+    
+    perm = permutations_(repeating_indexes, constraints) 
+
+    
+    
+ 
 
     for i in perm:
         if len(merged) == len(repeating_indexes):
@@ -106,37 +140,30 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
     best_frog_order = best_frog.order
     worst_frog_order = worst_frog.order
     
-    #best_frog_order =[4, 5, 3, 2, 8, 1, 6, 7, 9]
-    #worst_frog_order = [1, 5 ,2, 4, 3, 6, 7, 9, 8] 
+    best_frog_order =[3.0, 4.0, 2.0, 1.0, 7.0, 0.0, 5.0, 6.0, 8.0]
+    worst_frog_order = [0.0, 4.0, 1.0, 3.0, 2.0, 5.0, 6.0, 8.0, 7.0]
     
     #best_frog_order = [4, 1, 2, 0, 3, 5]
     #worst_frog_order = [0, 1, 3, 4, 2, 5]
     
     subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
-    print("Subtracting two orders:")
-    print(subtraction)
+    print(f"Subtracting two orders:{subtraction}")
     
-    random_multiplier = 0.09# rng.random()
+    random_multiplier = 0.11# rng.random() * (0.2)
     print(f'Random={random_multiplier}')
     new_shift =[abs(number * random_multiplier)for number in subtraction] 
     new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
     
-    
-    print(new_shift)
-    
-    
     new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
     
-    print(new_order)
+ 
     new_order = [round(number) for number in new_order]
-    
-   
-    print(new_order)
+    print(f"Pwnew {new_order}")
     result = has_duplicates(new_order)
     if result:
         new_order = normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
         print(f"Normalized:{new_order}")
-        new_order = remove_duplicates(new_order)
+        new_order = remove_duplicates(new_order, best_frog_order, worst_frog_order)
     
     print(len(new_order))
     if len(new_order) in new_order:
