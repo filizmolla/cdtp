@@ -1,7 +1,7 @@
 import numpy as np
 import sys, logging
 import time
-
+from itertools import permutations 
 from bottomleftfill import Sheet,CuttingStockSolutions
 
 
@@ -87,6 +87,89 @@ class SFLA:
                 memeplexes[i, j] = sorted_fitness[i + (self.mplx_no*j)]
         return memeplexes
     
+    
+    def has_duplicates(self, arr):
+        seen = set()
+        for elem in arr:
+            if elem in seen:
+                return True
+            seen.add(elem)
+        return False
+
+    def normalize_numbers_to_range_int(self, numbers, new_min, new_max):
+        # Find the minimum and maximum values in the array
+        min_value = min(numbers)
+        max_value = max(numbers)
+        
+        # Calculate the range of values
+        value_range = max_value - min_value
+        
+        # Normalize each number to the new range and round to the nearest integer
+        normalized_numbers = [round((num - min_value) / value_range * (new_max - new_min) + new_min) for num in numbers]
+        
+        return normalized_numbers
+    def remove_duplicates(self, order):
+        print("removing duplicates")
+        numbers = np.array(order)
+
+        unique_numbers = set()
+        duplicates = []
+        duplicate_indexes = {}
+        missing_numbers = []
+        indexes =[]
+
+        # Diziyi tarayarak tekrar eden numaraları bul ve unique_numbers kümesine ekle
+        for index, num in enumerate(numbers):
+            if num in unique_numbers:
+                duplicates.append(num)
+                duplicate_indexes[num].append(index)
+            else:
+                unique_numbers.add(num)
+                duplicate_indexes[num] = [index]
+
+        # 1'den başlayarak dizinin en büyük elemanına kadar olan tüm sayıları içeren bir referans kümesi oluştur
+        reference_set = set(range(0, len(numbers)))
+        
+        # Eksik numaraları bulmak için reference_set'ten unique_numbers'ı çıkart
+        missing_numbers = list(reference_set - unique_numbers)
+        print(f"Missing Numbers:{missing_numbers}")
+        print(f"Duplicates:{duplicates}")
+        
+        
+        merged = duplicates + missing_numbers
+        
+        merged = list(set(merged))
+        print(merged)
+        repeating_indexes = [index for indexes in duplicate_indexes.values() if len(indexes) > 1 for index in indexes]
+        
+        perm_matrice = np.empty((0, len(numbers)))
+
+        perm = permutations(repeating_indexes) 
+        print()
+        
+
+        for i in perm:
+            if len(merged) == len(repeating_indexes):
+                modified_numbers = numbers.copy()
+                for j in range(len(i)):
+                    modified_numbers[i[j]] = merged[j]
+                perm_matrice = np.vstack([perm_matrice, modified_numbers])
+        
+        print(perm_matrice)
+        
+        min_dist = 99999
+        min_index = -1
+        for index, row in enumerate(perm_matrice):
+            dist = np.linalg.norm(numbers - row)
+            #print(dist)
+            if dist < min_dist:
+                min_dist = dist
+                min_index = index
+        new_order = perm_matrice[min_index]
+        
+        
+        print(new_order)
+        return np.array(new_order).astype(int).tolist()
     def new_step(self, best_frog: Sheet, worst_frog: Sheet):
         """Calculates next step
         Args:
@@ -95,10 +178,43 @@ class SFLA:
         
         Returns:
             new_frog: mutated Bin Solution
-        """
-        new_shift = self.rng.random() * (best_frog.rov_continous - worst_frog.rov_continous)
-        new_rov_continous = worst_frog.rov_continous + new_shift
-        new_frog = self.bins_data.best_fit_algorithm(new_rov_continous)
+            """
+        Smax = 4
+        best_frog_order = best_frog.order
+        worst_frog_order = worst_frog.order
+    
+        #best_frog_order =[4, 5, 3, 2, 8, 1, 6, 7, 9]
+        #worst_frog_order = [1, 5 ,2, 4, 3, 6, 7, 9, 8] 
+    
+        #best_frog_order = [4, 1, 2, 0, 3, 5]
+        #worst_frog_order = [0, 1, 3, 4, 2, 5]
+    
+        subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
+        #print(f"Subtracting two orders:{subtraction}")
+    
+        random_multiplier = 0.09# rng.random()
+        #print(f'Random={random_multiplier}')
+        new_shift =[abs(number * random_multiplier)for number in subtraction] 
+        new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
+        #print(new_shift)
+        new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
+        #print(new_order)        
+        new_order = [round(number) for number in new_order]
+    
+        print(new_order)
+        result = self.has_duplicates(new_order)
+        if result:
+            new_order = self.normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
+            #print(f"Normalized:{new_order}")
+            new_order = self.remove_duplicates(new_order)
+    
+        print(len(new_order))
+        if len(new_order) in new_order:
+            new_order = [x - 1 if x != 0 else x for x in new_order]
+            print(new_order)
+
+        new_frog = self.sheet_data.blf_algorithm_custom_order(new_order)
+    
         return new_frog
 
 
@@ -119,7 +235,7 @@ class SFLA:
         im, iter_idx = ls_args
         memeplex = self.memeplexes[im]
         extracted_bin_sols = {int(item):self.sheet_data.sheet_solutions.get(item) for item in memeplex}
-        print("haymk")
+        print("aaaaaa")
         print(extracted_bin_sols)
         # Assuming extracted_bin_sols is a dictionary
         for key, value in extracted_bin_sols.items():
@@ -172,7 +288,7 @@ class SFLA:
         self.frog_gb = self.sheet_data.sheet_solutions.get(int(self.memeplexes[0][0]))
         for frog_id in range(self.mplx_no):
             res = self.local_search_one_memeplex([frog_id, iter_idx])
-            self.bins_data.sheet_solutions.update(res[0])
+            self.sheet_data.sheet_solutions.update(res[0])
             self.memeplexes[res[1]] = res[2]
 
     def shuffle_memeplexes(self):
@@ -180,7 +296,7 @@ class SFLA:
         """
         logger.info("Shuffling the memeplexes and sorting them")
         temp = self.memeplexes.flatten()
-        temp = np.array(sorted(temp, key = lambda x: self.bins_data.bin_solutions.get(x).score))
+        temp = np.array(sorted(temp, key = lambda x: self.sheet_data.sheet_solutions.get(x).score))
         for j in range(self.FrogsEach):
             for i in range(self.mplx_no):
                 self.memeplexes[i, j] = temp[i + (self.mplx_no * j)]
@@ -192,8 +308,6 @@ class SFLA:
         s1 = time.time()
         self.generate_init_population()
         print(self.frogs)
-        
-        print("OFFMK")
         self.memeplexes = self.sort_frog()
         print(self.memeplexes)
         
@@ -203,29 +317,30 @@ class SFLA:
             self.local_search(idx+1)
             self.shuffle_memeplexes()
         e1 = time.time()
-        best_solution = self.bins_data.bin_solutions.get(self.memeplexes[0][0])
+        best_solution = self.sheet_data.sheet_solutions.get(self.memeplexes[0][0])
         logger.info(f"Time taken: {e1-s1}s")
         logger.info(f"Memeplexes :::\n{self.memeplexes} ::: Best Frog => {best_solution}")
-        logger.info(f"Best Frog Bins => {best_solution.bins}")
-        logger.info(f"Best Frog free capacities in bins => {best_solution.free_bin_caps}")
+        logger.info(f"Best Frog Order => {best_solution.order}")
+        logger.info(f"Best Frog Score => {best_solution.score}")
         
         with open("Result.txt", 'w') as result:
             result.write("<==== RESULTS ====>\n")
             result.write(f"Best minimum no of bins and Bin Efficiency by SFLA (Best Frog):- {best_solution}\n")
             result.write(f"<--- Best Frog Bin Solution --->\n")
-            for bin_id, bin in enumerate(best_solution.bins):
-                result.write(f"Bin {bin_id + 1}: {bin}\n")
-            result.write(f"Free capacities in each bins: {best_solution.free_bin_caps}\n")
+            result.write(f"Best Frog Order for {data_name} is: {best_solution.order}\n")
+            #for bin_id, bin in enumerate(best_solution.bins):
+            #    result.write(f"Bin {bin_id + 1}: {bin}\n")
+            #result.write(f"Free capacities in each bins: {best_solution.free_bin_caps}\n")
         
         return best_solution, (e1 - s1)
 
 if __name__ == "__main__":
-    n = 100
+    n = 10
     # path = "./../data/bin1data/N3C2W4_T.BPP"
     # path = "./../data/bin2data/N2W1B1R7.BPP"
     # path = "./../data/bin2data/N3W1B3R0.BPP"
     # path = "./../data/bin2data/N1W1B1R5.BPP"
-    file_name = 'C1_1'
+    file_name = 'C0_0'
     path = 'original/' + file_name
 
     
