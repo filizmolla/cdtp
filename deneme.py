@@ -3,7 +3,7 @@ import random
 import numpy as np
 from itertools import permutations 
 
-rng = np.random.default_rng(9876)
+rng = np.random.default_rng(98765)
 def has_duplicates(arr):
     seen = set()
     for elem in arr:
@@ -11,6 +11,19 @@ def has_duplicates(arr):
             return True
         seen.add(elem)
     return False
+
+def normalize_numbers_to_range_int(numbers, new_min, new_max):
+    # Find the minimum and maximum values in the array
+    min_value = min(numbers)
+    max_value = max(numbers)
+    
+    # Calculate the range of values
+    value_range = max_value - min_value
+    
+    # Normalize each number to the new range and round to the nearest integer
+    normalized_numbers = [round((num - min_value) / value_range * (new_max - new_min) + new_min) for num in numbers]
+    
+    return normalized_numbers
 
 
 def remove_duplicates(order):
@@ -42,12 +55,16 @@ def remove_duplicates(order):
     
     
     merged = duplicates + missing_numbers
+    
+    merged = list(set(merged))
     print(merged)
     repeating_indexes = [index for indexes in duplicate_indexes.values() if len(indexes) > 1 for index in indexes]
     
     perm_matrice = np.empty((0, len(numbers)))
 
     perm = permutations(repeating_indexes) 
+    print()
+    
 
     for i in perm:
         if len(merged) == len(repeating_indexes):
@@ -62,7 +79,7 @@ def remove_duplicates(order):
     min_index = -1
     for index, row in enumerate(perm_matrice):
         dist = np.linalg.norm(numbers - row)
-        print(dist)
+        #print(dist)
         if dist < min_dist:
             min_dist = dist
             min_index = index
@@ -92,11 +109,14 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
     #best_frog_order =[4, 5, 3, 2, 8, 1, 6, 7, 9]
     #worst_frog_order = [1, 5 ,2, 4, 3, 6, 7, 9, 8] 
     
+    #best_frog_order = [4, 1, 2, 0, 3, 5]
+    #worst_frog_order = [0, 1, 3, 4, 2, 5]
+    
     subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
     print("Subtracting two orders:")
     print(subtraction)
     
-    random_multiplier = 0.11#rng.random()
+    random_multiplier = 0.09# rng.random()
     print(f'Random={random_multiplier}')
     new_shift =[abs(number * random_multiplier)for number in subtraction] 
     new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
@@ -113,9 +133,10 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
    
     print(new_order)
     result = has_duplicates(new_order)
-    if result:    
+    if result:
+        new_order = normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
+        print(f"Normalized:{new_order}")
         new_order = remove_duplicates(new_order)
-    
     
     print(len(new_order))
     if len(new_order) in new_order:
@@ -128,7 +149,7 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
 
 
 
-file_name = 'C0_0'
+file_name = 'C1_1'
 file_path = 'original/' + file_name
 csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)

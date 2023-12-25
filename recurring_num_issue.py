@@ -2,6 +2,9 @@ from itertools import permutations
 import numpy as np
 
 numbers = np.array([1, 5, 2, 4, 4, 7, 7, 9, 8])
+numbers = np.array([2, 0, 2, 5, 2, 3])
+
+
 
 unique_numbers = set()
 duplicates = []
@@ -14,22 +17,32 @@ for index, num in enumerate(numbers):
     if num in unique_numbers:
         duplicates.append(num)
         duplicate_indexes[num].append(index)
-
     else:
         unique_numbers.add(num)
         duplicate_indexes[num] = [index]
 
-# 1'den başlayarak dizinin en büyük elemanına kadar olan tüm sayıları içeren bir referans kümesi oluştur
-reference_set = set(range(1, max(numbers) + 1))
 
-# Eksik numaraları bulmak için reference_set'ten unique_numbers'ı çıkart
+reference_set = set(range(0, len(numbers) ))
 missing_numbers = list(reference_set - unique_numbers)
 
 print("Tekrar eden numaraların indexleri:", duplicate_indexes)
+
+
+for key, value in duplicate_indexes.items():
+    print(f"For {key}, indexes {value}")
+
+
+
+
+
+
 print("Tekrar eden numaralar:", duplicates)
 print("Eksik numaralar:", missing_numbers)
 merged = duplicates + missing_numbers
+
+merged = list(set(merged))
 print(merged)
+
 repeating_indexes = [index for indexes in duplicate_indexes.values() if len(indexes) > 1 for index in indexes]
 print(repeating_indexes)
 
