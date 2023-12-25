@@ -60,8 +60,8 @@ class Sheet:
     
     def draw(self):
         fig, ax = plt.subplots()
-        ax.set_xlim(0, self.size[0] * 1.5)  
-        ax.set_ylim(0, self.size[1] * 1.5)      
+        ax.set_xlim(-1, self.size[0] * 1.5)  
+        ax.set_ylim(-1, self.size[1] * 1.5)      
         for piece in self.pieces:
             if piece.position is not None:
                 rect = patches.Rectangle(
