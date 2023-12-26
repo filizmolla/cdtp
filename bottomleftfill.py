@@ -86,8 +86,8 @@ class Sheet:
 
 class Piece:
     def __init__(self, width, height):
-        self.width = width #if width < height else height       #kareleri döndürmek için kullandım
-        self.height = height #if width < height else width
+        self.width = width if width > height else height       #kareleri döndürmek için kullandım
+        self.height = height if width > height else width
         self.position = None
         
 
@@ -186,7 +186,7 @@ class CuttingStockSolutions:
         else:
             self.sheet.score = 3
         
-        self.sheet.score = 1 / top_edge + 1 / right_edge
+        self.sheet.score = 1 / top_edge #+ 1 / right_edge
         if top_edge > sheet_height:
             self.sheet.score = self.sheet.score / 100
 
@@ -200,11 +200,11 @@ order=[7, 15, 8, 10, 11, 6, 5, 1, 14, 13, 3, 12, 0, 9, 2, 4]
 order = [5, 0, 4, 3, 1, 2]
 order = [0, 5, 3, 4, 1, 2]
 order = [3, 4, 5, 0, 1, 2]
-
+order= [2, 3, 4, 1, 5, 0]
 
 csp = CuttingStockSolutions()
 csp.extract_from_file(file_path, file_name)
-csp.blf_algorithm_custom_order()
+csp.blf_algorithm_custom_order(order)
 
 
 #for i in range(10):

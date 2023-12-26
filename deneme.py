@@ -25,7 +25,7 @@ def normalize_numbers_to_range_int(numbers, new_min, new_max):
     
     return normalized_numbers
 
-def permutations_(liste, constraints):
+def permutations_2(liste, constraints):
     result = []
     if len(liste) == 1: 
         return [liste.copy()]
@@ -41,7 +41,50 @@ def permutations_(liste, constraints):
         print(x)
         liste.append(n)
     return result
+
+def permutations_(liste, constraints):
+    possible = []
+    for key,value in constraints.items():
+        print(f'Value: {value[0], value[1]}')
+        if value[0] < value[1]:    
+            lower_bound = value[0]
+            upper_bound = value[1]
+        else: 
+            lower_bound = value[1]
+            upper_bound = value[0]
+        for i in enumerate(liste):
+            if  lower_bound <= i[1] <= upper_bound:
+                print(f"Karşılaştır: {lower_bound, upper_bound, i, liste[i]}")
+                print(liste[i])
     
+
+    for key, value in possible.items():
+        print(f'Key: {key}, Value: {value}')
+
+    return liste
+    
+def is_within_constraints(value, constraint):
+    lower_limit, upper_limit = min(constraint), max(constraint)
+    return lower_limit <= value <= upper_limit
+
+def permutations_with_constraints(lst, constraints):
+    if not lst or len(lst) != len(constraints):
+        return []
+
+    valid_permutations = []
+    
+    i = 0 
+    for perm in permutations(lst):
+        if i >= 1000:
+            break
+        valid = all(is_within_constraints(float(perm[i]), constraints[i]) for i in range(len(perm)))
+        if valid:
+            valid_permutations.append(list(perm))
+        i +=1
+    
+    print(i)
+    return valid_permutations
+
 def remove_duplicates(order, best_frog_order, worst_frog_order):
     print("removing duplicates")
     numbers = np.array(order)
@@ -91,20 +134,16 @@ def remove_duplicates(order, best_frog_order, worst_frog_order):
     
     valid_combinations = []
 
+    perms = permutations_with_constraints(merged, list(constraints.values())) 
+    if len(perms) == 0:
+        return worst_frog_order
 
-    
-    
-    perm = permutations_(repeating_indexes, constraints) 
-
-    
-    
- 
-
-    for i in perm:
+    for perm in perms:
         if len(merged) == len(repeating_indexes):
             modified_numbers = numbers.copy()
-            for j in range(len(i)):
-                modified_numbers[i[j]] = merged[j]
+            for j in range(len(perm)):
+                #print(modified_numbers, repeating_indexes, j, perm)
+                modified_numbers[repeating_indexes[j]]= perm[j]
             perm_matrice = np.vstack([perm_matrice, modified_numbers])
     
     print(perm_matrice)
@@ -117,6 +156,8 @@ def remove_duplicates(order, best_frog_order, worst_frog_order):
         if dist < min_dist:
             min_dist = dist
             min_index = index
+    if min_index == -1:
+         print("")   
     new_order = perm_matrice[min_index]
     
     
@@ -140,8 +181,11 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
     best_frog_order = best_frog.order
     worst_frog_order = worst_frog.order
     
-    best_frog_order =[3.0, 4.0, 2.0, 1.0, 7.0, 0.0, 5.0, 6.0, 8.0]
-    worst_frog_order = [0.0, 4.0, 1.0, 3.0, 2.0, 5.0, 6.0, 8.0, 7.0]
+    #best_frog_order = [0, 4, 9, 10, 15, 5, 2, 8, 11, 12, 1, 13, 7, 14, 3, 6]
+    #worst_frog_order = [11, 2, 7, 12, 15, 10, 0, 14, 5, 3, 8, 9, 4, 13, 6, 1]
+    
+    #best_frog_order =[3.0, 4.0, 2.0, 1.0, 7.0, 0.0, 5.0, 6.0, 8.0]
+    #worst_frog_order = [0.0, 4.0, 1.0, 3.0, 2.0, 5.0, 6.0, 8.0, 7.0]
     
     #best_frog_order = [4, 1, 2, 0, 3, 5]
     #worst_frog_order = [0, 1, 3, 4, 2, 5]
@@ -149,7 +193,7 @@ def new_step(best_frog: Sheet, worst_frog: Sheet):
     subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
     print(f"Subtracting two orders:{subtraction}")
     
-    random_multiplier = 0.11# rng.random() * (0.2)
+    random_multiplier = 0.21# rng.random() * (0.2)
     print(f'Random={random_multiplier}')
     new_shift =[abs(number * random_multiplier)for number in subtraction] 
     new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]

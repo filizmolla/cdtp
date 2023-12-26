@@ -81,15 +81,34 @@ class SFLA:
         sorted_fitness = np.array(sorted(
             self.sheet_data.sheet_solutions, key=lambda x: self.sheet_data.sheet_solutions[x].score))
         
-        reversed_fitness = sorted_fitness[::-1]
-        sorted_fitness = reversed_fitness
-        
         memeplexes = np.empty((self.mplx_no, self.FrogsEach))
         for j in range(self.FrogsEach):
             for i in range(self.mplx_no):
                 memeplexes[i, j] = sorted_fitness[i + (self.mplx_no*j)]
         return memeplexes
     
+    
+    def is_within_constraints(self, value, constraint):
+        lower_limit, upper_limit = min(constraint), max(constraint)
+        return lower_limit <= value <= upper_limit
+
+    def permutations_with_constraints(self, lst, constraints):
+        if not lst or len(lst) != len(constraints):
+            return []
+
+        valid_permutations = []
+        
+        i = 0 
+        for perm in permutations(lst):
+            if i >= 1000:
+                break
+            valid = all(self.is_within_constraints(float(perm[i]), constraints[i]) for i in range(len(perm)))
+            if valid:
+                valid_permutations.append(list(perm))
+            i +=1
+        
+        print(i)
+        return valid_permutations
     
     def has_duplicates(self, arr):
         seen = set()
@@ -111,7 +130,8 @@ class SFLA:
         normalized_numbers = [round((num - min_value) / value_range * (new_max - new_min) + new_min) for num in numbers]
         
         return normalized_numbers
-    def remove_duplicates(self, order):
+    
+    def remove_duplicates(self, order, best_frog_order, worst_frog_order):
         print("removing duplicates")
         numbers = np.array(order)
 
@@ -120,12 +140,14 @@ class SFLA:
         duplicate_indexes = {}
         missing_numbers = []
         indexes =[]
+        comparison_info = []
+
 
         # Diziyi tarayarak tekrar eden numaraları bul ve unique_numbers kümesine ekle
         for index, num in enumerate(numbers):
             if num in unique_numbers:
                 duplicates.append(num)
-                duplicate_indexes[num].append(index)
+                duplicate_indexes.setdefault(num, []).append(index)
             else:
                 unique_numbers.add(num)
                 duplicate_indexes[num] = [index]
@@ -147,15 +169,27 @@ class SFLA:
         
         perm_matrice = np.empty((0, len(numbers)))
 
-        perm = permutations(repeating_indexes) 
-        
-        
+        #print(f"REPEATING INDICES {repeating_indexes}")
+        #CHECK OTHER LISTS 
+        constraints = {}
 
-        for i in perm:
+        for index in repeating_indexes:
+            constraints[index] = (best_frog_order[index], worst_frog_order[index])
+
+        print("Comparison Info:", [f"{key}: {value}" for key, value in constraints.items()])
+        
+        valid_combinations = []
+
+        perms = self.permutations_with_constraints(merged, list(constraints.values())) 
+        if len(perms) == 0:
+            return worst_frog_order
+
+        for perm in perms:
             if len(merged) == len(repeating_indexes):
                 modified_numbers = numbers.copy()
-                for j in range(len(i)):
-                    modified_numbers[i[j]] = merged[j]
+                for j in range(len(perm)):
+                    #print(modified_numbers, repeating_indexes, j, perm)
+                    modified_numbers[repeating_indexes[j]]= perm[j]
                 perm_matrice = np.vstack([perm_matrice, modified_numbers])
         
         print(perm_matrice)
@@ -168,11 +202,16 @@ class SFLA:
             if dist < min_dist:
                 min_dist = dist
                 min_index = index
+        if min_index == -1:
+             print("")   
         new_order = perm_matrice[min_index]
         
         
         print(new_order)
         return np.array(new_order).astype(int).tolist()
+    
+    
+    
     def new_step(self, best_frog: Sheet, worst_frog: Sheet):
         """Calculates next step
         Args:
@@ -182,34 +221,31 @@ class SFLA:
         Returns:
             new_frog: mutated Bin Solution
             """
+    
+    
         Smax = 4
         best_frog_order = best_frog.order
         worst_frog_order = worst_frog.order
-    
-        #best_frog_order =[4, 5, 3, 2, 8, 1, 6, 7, 9]
-        #worst_frog_order = [1, 5 ,2, 4, 3, 6, 7, 9, 8] 
-    
-        #best_frog_order = [4, 1, 2, 0, 3, 5]
-        #worst_frog_order = [0, 1, 3, 4, 2, 5]
+
     
         subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
-        #print(f"Subtracting two orders:{subtraction}")
+        print(f"Subtracting two orders:{subtraction}")
     
-        random_multiplier = 0.09# rng.random()
-        #print(f'Random={random_multiplier}')
+        random_multiplier = 0.32# rng.random() * (0.2)
+        print(f'Random={random_multiplier}')
         new_shift =[abs(number * random_multiplier)for number in subtraction] 
         new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
-        #print(new_shift)
-        new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
-        #print(new_order)        
-        new_order = [round(number) for number in new_order]
     
-        print(new_order)
+        new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
+    
+ 
+        new_order = [round(number) for number in new_order]
+        print(f"Pwnew {new_order}")
         result = self.has_duplicates(new_order)
         if result:
             new_order = self.normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
-            #print(f"Normalized:{new_order}")
-            new_order = self.remove_duplicates(new_order)
+            print(f"Normalized:{new_order}")
+            new_order = self.remove_duplicates(new_order, best_frog_order, worst_frog_order)
     
         print(len(new_order))
         if len(new_order) in new_order:
@@ -320,7 +356,7 @@ class SFLA:
             self.local_search(idx+1)
             self.shuffle_memeplexes()
         e1 = time.time()
-        best_solution = self.sheet_data.sheet_solutions.get(self.memeplexes[0][0])
+        best_solution = self.sheet_data.sheet_solutions.get(self.memeplexes[-1][-1])
         logger.info(f"Time taken: {e1-s1}s")
         logger.info(f"Memeplexes :::\n{self.memeplexes} ::: Best Frog => {best_solution}")
         logger.info(f"Best Frog Order => {best_solution.order}")
@@ -338,16 +374,16 @@ class SFLA:
         return best_solution, (e1 - s1)
 
 if __name__ == "__main__":
-    n = 10
+    n = 20
     # path = "./../data/bin1data/N3C2W4_T.BPP"
     # path = "./../data/bin2data/N2W1B1R7.BPP"
     # path = "./../data/bin2data/N3W1B3R0.BPP"
     # path = "./../data/bin2data/N1W1B1R5.BPP"
-    file_name = 'C0_0'
+    file_name = 'C1_1'
     path = 'original/' + file_name
 
     
-    sfla = SFLA(frogs=40, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
+    sfla = SFLA(frogs=100, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
     sfla.run_sfla(path, file_name)
     #sfla.generate_one_frog()
     
