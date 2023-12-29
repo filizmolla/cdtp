@@ -100,8 +100,8 @@ class SFLA:
         
         i = 0 
         for perm in permutations(lst):
-            if i >= 1000:
-                break
+            #if i >= 10000:
+               # break
             valid = all(self.is_within_constraints(float(perm[i]), constraints[i]) for i in range(len(perm)))
             if valid:
                 valid_permutations.append(list(perm))
@@ -181,8 +181,9 @@ class SFLA:
         valid_combinations = []
 
         perms = self.permutations_with_constraints(merged, list(constraints.values())) 
-        if len(perms) == 0:
-            return worst_frog_order
+        #if len(perms) == 0:
+            #print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+            #return worst_frog_order
 
         for perm in perms:
             if len(merged) == len(repeating_indexes):
@@ -220,9 +221,7 @@ class SFLA:
         
         Returns:
             new_frog: mutated Bin Solution
-            """
-    
-    
+        """
         Smax = 4
         best_frog_order = best_frog.order
         worst_frog_order = worst_frog.order
@@ -231,19 +230,22 @@ class SFLA:
         subtraction = [a - b for a, b in zip(best_frog_order, worst_frog_order)]
         print(f"Subtracting two orders:{subtraction}")
     
-        random_multiplier = 0.32# rng.random() * (0.2)
+        random_multiplier = self.rng.random()
         print(f'Random={random_multiplier}')
         new_shift =[abs(number * random_multiplier)for number in subtraction] 
         new_shift = [eleman if eleman < Smax else Smax for eleman in new_shift]
     
         new_order = [a + b for a, b in zip(new_shift, worst_frog_order)]
-    
- 
         new_order = [round(number) for number in new_order]
+        new_order = self.normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
+        
         print(f"Pwnew {new_order}")
+        
+        
+        
         result = self.has_duplicates(new_order)
         if result:
-            new_order = self.normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
+            #new_order = self.normalize_numbers_to_range_int(new_order, 0, len(new_order) - 1)
             print(f"Normalized:{new_order}")
             new_order = self.remove_duplicates(new_order, best_frog_order, worst_frog_order)
     
@@ -374,7 +376,7 @@ class SFLA:
         return best_solution, (e1 - s1)
 
 if __name__ == "__main__":
-    n = 20
+    n = 10
     # path = "./../data/bin1data/N3C2W4_T.BPP"
     # path = "./../data/bin2data/N2W1B1R7.BPP"
     # path = "./../data/bin2data/N3W1B3R0.BPP"
@@ -383,7 +385,7 @@ if __name__ == "__main__":
     path = 'original/' + file_name
 
     
-    sfla = SFLA(frogs=100, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
+    sfla = SFLA(frogs=40, mplx_no=5, no_of_iteration=n, no_of_mutation=5, q=8)   # 250, 5, 5, 8 and 500, 10, 10, 16
     sfla.run_sfla(path, file_name)
     #sfla.generate_one_frog()
     
