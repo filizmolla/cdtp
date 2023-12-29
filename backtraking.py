@@ -7,7 +7,7 @@ Created on Tue Dec 26 22:06:04 2023
 """
 
 from enum import Enum
-
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -166,14 +166,19 @@ data="""49
 class Rectangle:
     def __init__(self, id, width, height):
         self.id = id
-        self.width = width
-        self.height = height
+        self.width = width 
+        self.height = height 
+        self.isRotated = False
+        
     
     def area(self):
         return self.width * self.height
 
     def isSquare(self):
         return self.width == self.height
+    
+    def clone(self):
+        return Rectangle(self.id, self.width, self.height)
     
     def __repr__(self):
         return f"({self.id} -> {self.width} {self.height})"
@@ -182,6 +187,9 @@ class Position:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        
+    def clone(self):
+        return Position(self.x, self.y)
         
     def __repr__(self):
         return f"[{self.x} {self.y}]"
@@ -194,6 +202,7 @@ class Place(Enum):
     TOP = 0
     LEFT = 1
 
+
 class Placement: 
     def __init__(self, rectangle, position, rotation, refercence_rectangle_id = None, placement_according_to_ref = None):
         self.rectangle = rectangle
@@ -203,6 +212,9 @@ class Placement:
         self.availableLeft = rectangle.height if rotation == Rotate.ROTATE_0 else rectangle.width
         self.referenceRectangleId = refercence_rectangle_id
         self.placementAccordingToRef = placement_according_to_ref
+    
+    def clone(self):
+        return Placement(self.rectangle.clone(), self.position.clone(), self.rotation, self.referenceRectangleId, self.placementAccordingToRef)
         
     def rotatedWidth(self):
         return self.rectangle.width if self.rotation == Rotate.ROTATE_0 else self.rectangle.height
@@ -233,6 +245,12 @@ class Sheet:
         self.width = width
         self.height = height
 
+    def area(self):
+        return self.width * self.height
+
+    def clone(self):
+        return Sheet(self.width, self.height)
+    
     def __repr__(self):
         return f"(Width: {self.width}, Height: {self.height})"
 
@@ -243,7 +261,25 @@ class PlacementEngine:
         self.sheet = sheet
         self.rectangles = dict(zip(map(lambda x: x.id , rectangles), rectangles))
         self.placements = dict([])
+        self.score#idk
 
+    def area(self):
+        area = 0
+        for placement in self.placements.values():
+            area += placement.rectangle.area()
+        return area
+    
+    def clone(self):
+        placementEngine = PlacementEngine(self.sheet, list(self.rectangles.values()))
+        
+        result = dict([])
+        for key, value in self.placements.items():
+            result[key] = value.clone()
+        placementEngine.placements = result
+
+        return placementEngine
+        
+        
     def checkOverlappingRects(self, newPlacement):
         def intersects(first, second):
             return not (first.top_right().x <= second.bottom_left().x
@@ -252,7 +288,7 @@ class PlacementEngine:
                 or first.bottom_left().y >= second.top_right().y)
 
         for placement in self.placements.values():
-            # print(f"intersect - {placement}, {newPlacement}, {intersects(placement, newPlacement)}")
+            #print(f"intersect - {placement}, {newPlacement}, {intersects(placement, newPlacement)}")
             if intersects(placement, newPlacement):
                 return True # there are overlapping rectangles 
         return False
@@ -285,7 +321,11 @@ class PlacementEngine:
             position = Position(0, 0)
             placement = Placement(rect, position, rotation)
             self.placements[rect.id] = placement
-            print("Place first to origin")
+            # print("Place first to origin")
+            if rotation == Rotate.ROTATE_90:
+                rect.isRotated = True
+            else:
+                rect.isRotate = False
             return True
         
         refRectPlacement = self.placements.get(referance_rectangle_id)
@@ -295,14 +335,41 @@ class PlacementEngine:
         rectWidth  = rect.width  if rotation == Rotate.ROTATE_0 else rect.height
         rectHeight = rect.height if rotation == Rotate.ROTATE_0 else rect.width
         
+        #idk:
+ #       print(rectWidth, rectHeight)
+ #       print(refRectPlacement.rectangle.width, refRectPlacement.rectangle.height, refRectPlacement.rectangle.isRotated)
+        
+        #idk:
+        if refRectPlacement.rectangle.isRotated:
+            refRectangleWidth = refRectPlacement.rectangle.height
+            refRectangleHeight = refRectPlacement.rectangle.width
+        else:
+            refRectangleWidth = refRectPlacement.rectangle.width
+            refRectangleHeight = refRectPlacement.rectangle.height
+            
+        
+            
+        
         if place == Place.LEFT:
             if refRectPlacement.availableLeft <= 0:
                 return False
             
             position = Position(
-                        refRectPlacement.position.x + refRectPlacement.rectangle.width, 
-                        refRectPlacement.position.y + (refRectPlacement.rectangle.height - refRectPlacement.availableLeft))
+                        refRectPlacement.position.x + refRectPlacement.rotatedWidth(), 
+                        refRectPlacement.position.y + (refRectPlacement.rotatedHeight() - refRectPlacement.availableLeft))
+            
+            
             placement = Placement(rect, position, rotation, referance_rectangle_id, place)
+            #idk:
+            if rotation == Rotate.ROTATE_0:
+                 rect.isRotated = False
+            else:
+                 rect.isRotated = True
+            
+            if placement.top_left().y < 0 or placement.bottom_left().y < 0:
+                pass 
+
+            
             if self.checkOverlappingRects(placement):
                 return False
 
@@ -317,10 +384,20 @@ class PlacementEngine:
                 return False
             
             position = Position(
-                        refRectPlacement.position.x + (refRectPlacement.rectangle.width - refRectPlacement.availableTop), 
-                        refRectPlacement.position.y + refRectPlacement.rectangle.height )
+                        refRectPlacement.position.x + (refRectPlacement.rotatedWidth() - refRectPlacement.availableTop), 
+                        refRectPlacement.position.y + refRectPlacement.rotatedHeight() )
             placement = Placement(rect, position, rotation, referance_rectangle_id, place)
             # print(f"\n\ncheck: {self.checkOverlappingRects(placement)}\n\n")
+           
+            if placement.top_left().y < 0 or placement.bottom_left().y < 0:
+                pass 
+           
+            #idk:
+            if rotation == Rotate.ROTATE_0:
+                 rect.isRotated = False
+            else:
+                 rect.isRotated = True
+            
             
             if self.checkOverlappingRects(placement):
                 return False
@@ -346,10 +423,25 @@ class PlacementEngine:
         
         del self.placements[rectangle_id]
 
-    def draw(self):
+    def draw(self, title = None):
         fig, ax = plt.subplots()
-        ax.set_xlim(-1, self.sheet.width * 1.5)  
-        ax.set_ylim(-1, self.sheet.height * 1.5)      
+        ax.set_xlim(-5, self.sheet.width * 1.5)  
+        ax.set_ylim(-5, self.sheet.height * 1.5)      
+
+        
+        # ax.grid(True)
+        
+        # ax.set_xticks(np.arange(-5, self.sheet.width * 1.5, 10))
+        # ax.set_yticks(np.arange(-5, self.sheet.width * 1.5, 10))
+        
+        # # And a corresponding grid
+        # ax.grid(which='both')
+        
+        # # Or if you want different settings for the grids:
+        # ax.grid(which='major', alpha=0.5)
+
+        
+        
         for placement in self.placements.values():
             rect = patches.Rectangle(
                 (placement.position.x, placement.position.y),  
@@ -360,11 +452,35 @@ class PlacementEngine:
                 facecolor='#FFE4C4'
                 )
             ax.add_patch(rect)
+            
+        if not title is None:
+            plt.title(title)
+            
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
+        return fig
     
+    def savePlot(self, filename):
+        fig = self.draw()
+        fig.savefig(filename, bbox_inches='tight')
 
-
+        
+    def score(self):
+        a = list(self.placements.keys())
+        b = list(range(len(self.rectangles)))        
+        difference = list(set(b) - set(a))
+        # print(difference)
+        total_area = 0
+        for indis in difference:
+            missing = self.rectangles.get(indis)
+            area = missing.height * missing.width
+            total_area += area 
+        #print(area, total_area)
+        if total_area == 0:
+            total_area = 1
+        
+        return 1/ total_area
+        
 
 def readData(data):
     lines = data.split("\n");
@@ -373,55 +489,56 @@ def readData(data):
     sheet = Sheet(sheet[0], sheet[1])
     rectangles = []
     for i in range(len(lines) - 2):
-        rectangle = list(map(lambda x: int(x), lines[i+2].strip(" ").split(" ")))
+        ln = lines[i+2].strip(" ")
+        if len(ln) == 0:
+            continue 
+        rectangle = list(map(lambda x: int(x), ln.split(" ")))
         rectangles.append(Rectangle(i, rectangle[0], rectangle[1]))
     return sheet, rectangles
-        
 
 
+# currentBest = dict([])
 
-# def track(rectangle_id, reference_rectangle_id, placement, rotation):
-    
-#     for placedRectangles in list(engine.placements.values()) + [None]:
-#         for placement in [Place.LEFT, Place.TOP]:
-#             for rotation in [Rotate.ROTATE_0, Rotate.ROTATE_90]:
-#                 engine.place(rectangle_id, placedRectangles, placement, rotation)
+# def calcArea():
+#     area = 0
+#     for placement in placements.values():
+#         area += placement.rectangle.area()
+#     return area
 
-#     result = engine.place(rectangle_id, reference_rectangle_id, placement, rotation)
-    
-#     if result == True:
-#         for rectangle in engine.getUnplacedRectangles():
-#             track()
-#     else: 
-#         return False
-    
-# def backtrack(sheet, rectangles):
-#     engine = PlacementEngine(sheet, rectangles)
-    
-#     for rectangle in rectangles:
-#         for placedRectangles in list(engine.placements.values()) + [None]:
-#             for placement in [Place.LEFT, Place.TOP]:
-#                 for rotation in [Rotate.ROTATE_0, Rotate.ROTATE_90]:
-#                     engine.place(rectangle.id, placedRectangles, placement, rotation)
-    
+# def clonePlacements(palcements):
+#     result = dict([])
+#     for key, value in placements:
+#         result[key] = value.clone()
+#     return result 
 
+currentBest = PlacementEngine(None, [])
+i = 0
 
 def backtrack(engine, rectangles):
+    global i
+    global currentBest
+
     if len(rectangles) == 0:
         return True
     
-    i = 0
     for rectangle in rectangles:
         for placed in ([None] if engine.placements.__len__() == 0 else []) + list(engine.placements.keys()):
             for placement in [Place.LEFT, Place.TOP]:
-                for rotation in [Rotate.ROTATE_0, Rotate.ROTATE_90]:
+                for rotation in [Rotate.ROTATE_0, Rotate.ROTATE_90] if not engine.rectangles[rectangle].isSquare() else [Rotate.ROTATE_0]:
                     # print(rectangle, placed)
                     result = engine.place(rectangle, placed, placement, rotation)
-                    print(engine.placements.keys(), rectangles)
+                    
+                    if engine.area() > currentBest.area():
+                        currentBest = engine.clone()
+                    
                     if i % 1000 == 0:
-                        engine.draw()
+                        engine.draw(f"{i} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
+                        # print(i, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
                     i += 1
                     
+                    if i >= 500_000:
+                        return True
+
                     if result:
                         unplaced = engine.getUnplacedRectangles()
                         result2 = backtrack(engine, unplaced)
@@ -429,91 +546,140 @@ def backtrack(engine, rectangles):
                             engine.unplace(rectangle)
                         else: 
                             return True
-        
-  
-# def backtrack(engine, rectangles):
-#     #print(rectangles)
-#     if not rectangles:
-#         print("Solution found:")
-#         engine.draw()
-#         return True
-    
-#     current_rectangle = rectangles[0]
-#     engine.place(current_rectangle.id, None, Place.TOP, Rotate.ROTATE_0)
-#     rectangles.pop(0)
-#     engine.draw()
-    
-#     #print(current_rectangle)
+                        
+    return False
 
-#     for rectangle in rectangles:
-#         print(f"{rectangle}")
-#         for placed_rectangle_id, placed_rectangle in engine.placements.items():
-#             print(f"Placed: {placed_rectangle}, {placed_rectangle_id}")
-#             for placement in [Place.LEFT, Place.TOP]:
-#                 print(placement)
-#                 for rotation in [Rotate.ROTATE_0, Rotate.ROTATE_90]:
-#                      print(rotation)
-                     
-#                      result = engine.place(rectangle.id, placed_rectangle_id, placement, rotation)
-#                      engine.draw()
-#                      if result:
-#                         print(f"Placed rectangle {current_rectangle.id} successfully.")
-#                         print("Current placements:", engine.placements)
-#                         res = backtrack(engine, rectangles[1:])
-#                         if not res:
-#                             print(f"Backtracked from rectangle {current_rectangle.id}.")
-#                             engine.unplace(current_rectangle.id)
                         
 
 def extract_from_file(file_path, file_name):
     with open(file_path, 'r') as file:
         data = ' \n'.join(line.strip() for line in file)
-    #data = '"""' + data + '"""'
     return data
    
-filename = 'C7_3'
+    
+   
+    
+
+
+# import os
+# import sys
+# path = "/home/filiz/Desktop/CDTP/original/"
+
+# results = []
+
+# for file in sorted(os.listdir(path)):
+#     data = extract_from_file(path+file, file)
+#     sheet, rectangles = readData(data)
+#     rectangles = sorted(rectangles, key=lambda rect: min(rect.width, rect.height), reverse=True)
+
+    
+#     currentBest = PlacementEngine(None, [])
+#     i = 0
+
+#     engine = PlacementEngine(sheet, rectangles)
+#     result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+
+#     results.append((file, currentBest.area(), len(currentBest.getUnplacedRectangles())))
+#     print(f"{file} {currentBest.area()}/{sheet.area()} {len(currentBest.getUnplacedRectangles())}/{len(rectangles)}")
+
+#     # area = 0
+#     # for rect in rects:
+#     #     area += rect.area()
+#     # print(file, sheet.height*sheet.width, area, len(rects))
+        
+
+# for result in results:
+#     print(result)
+# sys.exit(0)
+
+    
+# 4 3
+# 2 10
+
+
+
+
+# import random
+
+# for j in range(20):
+#     filename = 'C0_0'
+#     file_path = 'original/' + filename
+#     data = extract_from_file(file_path, filename)
+    
+#     sheet, rectangles = readData(data)
+#     random.shuffle(rectangles)
+
+#     engine = PlacementEngine(sheet, rectangles)
+    
+#     i = 0
+#     currentBest = PlacementEngine(None, [])
+#     result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+#     currentBest.savePlot(f"plots/{j}.png")
+#     print(f"{filename} {i} {currentBest.area()}/{sheet.area()} {len(currentBest.getUnplacedRectangles())}/{len(rectangles)}")
+
+
+
+
+filename = 'C1_1'
 file_path = 'original/' + filename
 data = extract_from_file(file_path, filename)
-
-print(data)
 
 
 
 sheet, rectangles = readData(data)
-# print(sheet, rectangles)
+print(sheet, rectangles)
+# rectangles = sorted(rectangles, key=lambda rect: max(rect.width, rect.height), reverse=True)
+rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
 
-
-
-#rectangles = sorted(rectangles, key=lambda rect: (rect.width, rect.height), reverse=True)
-
+# import random
+# random.shuffle(rectangles)
 
 
 
 engine = PlacementEngine(sheet, rectangles)
-print(engine.rectangles)
 
 
 
-# print(engine.place(1, None, Place.TOP, Rotate.ROTATE_90))
-# print(engine.place(3, 1, Place.LEFT, Rotate.ROTATE_90))
-# print(engine.place(4, 1, Place.LEFT, Rotate.ROTATE_90))
-# print(engine.place(0, 1, Place.TOP, Rotate.ROTATE_0))
+import time
+t = time.process_time()
+result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+elapsed_time = time.process_time() - t
+print(i, elapsed_time)
+
+print(result)
+print(engine.placements.keys())
+print(engine.placements.items())
+    
+    
+engine.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
+currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
+
+print(engine.score())
+
+
+for placement in currentBest.placements.values():
+    print(placement.bottom_left(), placement.top_right())
+
+
+
+
+
+# print(engine.place(1, None, Place.TOP, Rotate.ROTATE_0))
+# print(engine.place(2, 1, Place.TOP, Rotate.ROTATE_0))
+# print(engine.place(3, 2, Place.LEFT, Rotate.ROTATE_0))
+# print(engine.place(0, 3, Place.LEFT, Rotate.ROTATE_0))
 # engine.draw()
 # print(engine.placements)
 
 
 # print(engine.place(1, None, Place.TOP, Rotate.ROTATE_90))
-# print(engine.place(3, 1, Place.TOP, Rotate.ROTATE_90))
+# print(engine.place(3, 1, Place.TOP, Rotate.ROTATE_0))
 # print(engine.place(0, 1, Place.LEFT, Rotate.ROTATE_90))
 # print(engine.placements)
+# engine.draw()
 # print(engine.getUnplacedRectangles())
 # engine.unplace(0)
 # engine.unplace(3)
+# print(engine.getUnplacedRectangles())
+# engine.draw()
 
-
-
-engine.draw()
-
-result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
-print(result)
-print(engine.placements.keys())
