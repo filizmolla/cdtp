@@ -14,6 +14,10 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 from tkinter import filedialog
 import os
 import time
+import tkinter.ttk as ttk
+import threading
+from collections import deque
+
 
 class Rectangle:
     def __init__(self, id, width, height):
@@ -130,7 +134,14 @@ class PlacementEngine:
         placementEngine.placements = result
 
         return placementEngine
-        
+    
+    def copyOfPlacements(self):
+        result = dict([])
+        for key, value in self.placements.items():
+            result[key] = value.clone()
+
+        return result
+    
         
     def checkOverlappingRects(self, newPlacement):
         def intersects(first, second):
@@ -275,6 +286,9 @@ class PlacementEngine:
         
         del self.placements[rectangle_id]
 
+    
+    
+
     def draw(self, title = None):
         fig, ax = plt.subplots()
         ax.set_xlim(0, self.sheet.width)  
@@ -310,10 +324,10 @@ class PlacementEngine:
             
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
-        return fig
+        return fig, ax
     
     def savePlot(self, filename):
-        fig = self.draw()
+        fig, ax = self.draw()
         fig.savefig(filename, bbox_inches='tight')
 
         
@@ -348,12 +362,23 @@ def readData(data):
         rectangles.append(Rectangle(i, rectangle[0], rectangle[1]))
     return sheet, rectangles
 
-currentBest = PlacementEngine(None, [])
-i = 0
 
-def backtrack(engine, rectangles):
-    global i
-    global currentBest
+
+
+
+
+
+class Context:
+    
+    def __init__(self, best, inform_callback = None):
+        self.best = best
+        self.iteration = 0
+        self.inform_callback = inform_callback
+
+
+def backtrack(engine, rectangles, context):
+    # global i
+    # global currentBest
 
     if len(rectangles) == 0:
         return True
@@ -365,20 +390,24 @@ def backtrack(engine, rectangles):
                     # print(rectangle, placed)
                     result = engine.place(rectangle, placed, placement, rotation)
                     
-                    if engine.area() > currentBest.area():
-                        currentBest = engine.clone()
+                    if engine.area() > context.best.area():
+                        context.best = engine.clone()
+                        
+                    # print(context.iteration, context.best.area(), context.best)
+                    if context.iteration % 1000 == 0:
+                        if context.inform_callback != None:
+                            context.inform_callback(context.iteration, context.best)
+                        #engine.draw(f"{context.iteration} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
+                        #print(context.iteration, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
                     
-                    if i % 1000 == 0:
-                       engine.draw(f"{i} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
-                       print(i, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
-                    i += 1
+                    context.iteration += 1
                     
-                    if i >= 500_0:
+                    if context.iteration >= 500_000:
                         return True
 
                     if result:
                         unplaced = engine.getUnplacedRectangles()
-                        result2 = backtrack(engine, unplaced)
+                        result2 = backtrack(engine, unplaced, context)
                         if result2 == False:
                             engine.unplace(rectangle)
                         else: 
@@ -398,39 +427,18 @@ def extract_from_file(file_path, file_name):
 
 
 
-# def plot(): 
-
-# 	# the figure that will contain the plot 
-# 	fig = Figure(figsize = (5, 5), 
-# 				dpi = 100) 
-
-# 	# list of squares 
-# 	y = [i**2 for i in range(101)] 
-
-# 	# adding the subplot 
-# 	plot1 = fig.add_subplot(111) 
-
-# 	# plotting the graph 
-# 	plot1.plot(y) 
-
-# 	# creating the Tkinter canvas 
-# 	# containing the Matplotlib figure 
-# 	canvas = FigureCanvasTkAgg(fig, master = lower_frame) 
-# 	canvas.draw() 
-
-# 	# placing the canvas on the Tkinter window 
-# 	canvas.get_tk_widget().pack() 
-
-# 	# creating the Matplotlib toolbar 
-# 	toolbar = NavigationToolbar2Tk(canvas, lower_frame) 
-# 	toolbar.update() 
-
-# 	# placing the toolbar on the Tkinter window 
-# 	canvas.get_tk_widget().pack() 
-
 def print_rectangles():
     # png to gcla 
     pass 
+
+
+
+
+
+
+# # Means of communication, between the gui & update threads:
+# message_queue = deque()
+
 
 
 
@@ -444,32 +452,56 @@ def start():
     chart_frame2.grid(row=0, column=1, sticky="nsew")
     
    
-    filename = 'C0_0'
+    filename = label_file_explorer.cget("text")
+    filename = filename.split()[-1]        
     file_path = 'original/' + filename
     data = extract_from_file(file_path, filename)
     sheet, rectangles = readData(data)
     rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
     print(rectangles)
     engine = PlacementEngine(sheet, rectangles)
+    
+    
+        
+    # def inform_fn(iteration, best):
+    #     fig, ax = best.draw(f"{iteration} - {best.area()} - {len(best.getUnplacedRectangles())}")
+    #     def fn():
+    #         canvas = FigureCanvasTkAgg(fig, chart_frame1)
+    #         canvas.draw()
+    #         canvas.get_tk_widget().pack(side='top', expand=True, padx=10, pady=10)
+    #         toolbar = NavigationToolbar2Tk(canvas, chart_frame1)
+    #         toolbar.update() 
+    #         toolbar.pack(side="bottom")
+    #     message_queue.append(fn)
+        
+        
     t = time.process_time()
-    result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+    context = Context(PlacementEngine(sheet, []))
+    result = backtrack(engine, list(map(lambda x: x.id, rectangles)), context)
     elapsed_time = time.process_time() - t
-#    print(elapsed_time)
+    
+    clock_label.configure(text=str(round(elapsed_time, 2)) + "s") 
+    #print(elapsed_time)
     # print(result)
     # print(engine.placements.keys())
     # print(engine.placements.items())
     
-    fig = currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
+    fig, ax = context.best.draw(f"context.best - {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
     #print(currentBest.getUnplacedRectangles())    
+    
+
     
     #Figure 2 için kalanları çizdir.
     kalan_rectangles = []
-    for x in currentBest.getUnplacedRectangles():
-        kalan_rectangles.append(currentBest.rectangles.get(x))
+    for x in context.best.getUnplacedRectangles():
+        kalan_rectangles.append(context.best.rectangles.get(x))
     #print(kalan_rectangles)   
     engine2 = PlacementEngine(sheet, kalan_rectangles)
-    result2 = backtrack(engine2, list(map(lambda x: x.id, kalan_rectangles)))
-    fig2 = engine2.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
+    context = Context(PlacementEngine(sheet, []))
+    result2 = backtrack(engine2, list(map(lambda x: x.id, kalan_rectangles)), context)
+    fig2, ax = context.best.draw(f"last - {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
+    
+    
     
     # fig = Figure(figsize = (5, 5), dpi = 100) 
     # y = [i**2 for i in range(101)] 
@@ -477,10 +509,10 @@ def start():
     # plot1.plot(y) 
     canvas = FigureCanvasTkAgg(fig, chart_frame1)
     canvas.draw()
-    canvas.get_tk_widget().pack(side='top', expand=True, padx=10, pady=10)
-    # toolbar = NavigationToolbar2Tk(canvas, chart_frame1)
-    # toolbar.update() 
-    # toolbar.pack(side="bottom")
+    canvas.get_tk_widget().pack(side='top', expand=True, fill=tk.BOTH,padx=10, pady=10)
+    toolbar = NavigationToolbar2Tk(canvas, chart_frame1)
+    toolbar.update() 
+    toolbar.pack(side="bottom")
     
     # fig2 = Figure(figsize = (5, 5), dpi = 100) 
     # y = [i*2 for i in range(101)] 
@@ -488,13 +520,17 @@ def start():
     # plot2.plot(y) 
     canvas2= FigureCanvasTkAgg(fig2, chart_frame2)
     canvas2.draw()
-    canvas2.get_tk_widget().pack(side="top", expand=True,  padx=10, pady=10)
+    canvas2.get_tk_widget().pack(side="top", expand=True,  fill=tk.BOTH, padx=10, pady=10)
     
-    # toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
-    # toolbar2.update() 
-    # toolbar2.pack(side="bottom")
+    toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
+    toolbar2.update() 
+    toolbar2.pack(side="bottom")
 
-    
+
+def startThread():
+    threading.Thread(target=start).start()
+
+
 
 def selectFiles():
     filename = filedialog.askopenfilename(initialdir = "/home/filiz/Desktop/CDTP/original",
@@ -502,13 +538,13 @@ def selectFiles():
                                       filetypes=[("All files", "*")])
     filepath = filename
     filename=os.path.basename(filename).split('/')[-1]
-    label_file_explorer.configure(text="File Opened: "+filename)
+    label_file_explorer.configure(text="File Selected: "+filename)
     
 
 
 window = tk.Tk() 
 window.title('Cutting Stock Problem Solution') 
-window.geometry("1000x400") 
+window.geometry("1000x440") 
 
 upper_frame = tk.Frame(window) #, bg="#BD99D9" 
 upper_frame.pack(side="top", fill="x")
@@ -522,7 +558,7 @@ file_select_button = tk.Button(master= upper_frame,
 file_select_button.pack(side="left", padx=25, pady=25)
 
 label_file_explorer = tk.Label(upper_frame, 
-                            text = "File Explorer using Tkinter",
+                            text = "Please Select a File and Press Start!",
                             width = 40, height = 4, 
                             fg = "blue")
 label_file_explorer.pack(side="left", padx = 5, pady = 5)
@@ -553,8 +589,11 @@ print_button = tk.Button(master = side_frame,
 print_button.pack(side="bottom", padx=20, pady=20)
 
 
-label = tk.Label(upper_frame, text="0:00", font=25)
-label.pack(side="right", pady=20, padx=20)
+clock_label = tk.Label(side_frame, text="0s", font=25)
+clock_label.pack(side="top", pady=20, padx=20)
+
+
+
 
 
 lower_frame = tk.Frame(window) #turkuasz  , bg="#4EDED6"
@@ -562,6 +601,59 @@ lower_frame.pack(fill='both', expand=True)
 lower_frame.grid_columnconfigure(0, weight=1, uniform="group1")
 lower_frame.grid_columnconfigure(1, weight=1, uniform="group1")
 lower_frame.grid_rowconfigure(0, weight=1)
+
+
+
+
+# chart_frame1 = tk.Frame(lower_frame) #, bg="#EB2645"
+# #chart_frame1.pack(side="right")  
+# chart_frame1.grid(row=0, column=0, sticky="nsew")
+
+# chart_frame2 = tk.Frame(lower_frame) #, bg="#235FCA"
+# #chart_frame2.pack(side="left")
+# chart_frame2.grid(row=0, column=1, sticky="nsew")
+
+
+
+
+
+
+# canvas = FigureCanvasTkAgg(fig, chart_frame1)
+# canvas.draw()
+# canvas.get_tk_widget().pack(side='top', expand=True, padx=10, pady=10)
+# toolbar = NavigationToolbar2Tk(canvas, chart_frame1)
+# toolbar.update() 
+# toolbar.pack(side="bottom")
+
+
+# canvas2= FigureCanvasTkAgg(fig2, chart_frame2)
+# canvas2.draw()
+# canvas2.get_tk_widget().pack(side="top", expand=True,  padx=10, pady=10)
+
+# toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
+# toolbar2.update() 
+# toolbar2.pack(side="bottom")
+
+
+
+
+
+# Periodically check for text updates, in the gui thread.
+# Where 'gui thread' is the main thread,
+# that is running the gui event-loop.
+# Should only access the gui, in the gui thread/event-loop.
+
+# def consume_text():
+#     try:
+#         fn = message_queue.popleft()
+#         fn()
+#     except IndexError:
+#         pass  # Ignore, if no text available.
+#     # Reschedule call to consumeText.
+#     window.after(ms=1000, func=consume_text)
+
+
+# consume_text()  # Start the consumeText 'loop'.
 
 
 window.mainloop() 
@@ -585,10 +677,10 @@ C0_0 isimli dosyaya erişerek, her döngüde dikdörtgenleri random sırada veri
 #     engine = PlacementEngine(sheet, rectangles)
     
 #     i = 0
-#     currentBest = PlacementEngine(None, [])
+#     context.best = PlacementEngine(None, [])
 #     result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
-#     #currentBest.savePlot(f"plots/{j}.png")
-#     print(f"{filename} {i} {currentBest.area()}/{sheet.area()} {len(currentBest.getUnplacedRectangles())}/{len(rectangles)}")
+#     #context.best.savePlot(f"plots/{j}.png")
+#     print(f"{filename} {i} {context.best.area()}/{sheet.area()} {len(context.best.getUnplacedRectangles())}/{len(rectangles)}")
 
 
 
@@ -611,8 +703,8 @@ C0_0 isimli dosyaya erişerek, her döngüde dikdörtgenleri random sırada veri
 # print(engine.placements.keys())
 # print(engine.placements.items())
 # engine.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
-# currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
-# for placement in currentBest.placements.values():
+# context.best.draw(f"context.best - {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
+# for placement in context.best.placements.values():
 #     print(placement.bottom_left(), placement.top_right())
 
 
