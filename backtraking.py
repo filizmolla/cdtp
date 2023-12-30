@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Tue Dec 26 22:06:04 2023
 
@@ -10,158 +8,12 @@ from enum import Enum
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
-data = """6 
-10 10
-2 6
-4 4
-3 3
-2 7 
-3 3
-2 4"""
-
-data = """16 
-20 20
-2 12
-7 12
-8 6
-3 6
-3 5
-5 5
-3 12
-3 7
-5 7
-2 6
-3 2
-4 2
-3 4
-4 4
-9 2
-11 2"""
-
-data="""17
-20 20
-4 1
-4 5
-9 4
-3 5
-3 9
-1 4
-5 3
-4 1
-5 5
-7 2
-9 3
-3 13
-2 8
-15 4
-5 4
-10 6
-7 2"""
-
-data="""16 
-20 20
-4 14
-5 2
-2 2
-9 7
-5 5
-2 5
-7 7
-3 5
-6 5
-3 2
-6 2
-4 6
-6 3
-10 3
-6 3
-10 3"""
-
-#C2_1
-data="""28
-60 30
-7 5
-14 5
-14 8
-4 8
-21 13
-7 11
-14 11
-14 5
-4 5
-18 3
-21 3
-17 11
-4 11
-7 4
-5 4
-6 7
-18 5
-3 5
-7 3
-5 3
-18 4
-3 4
-12 2
-6 2
-18 5
-21 5
-17 3
-4 3"""
-
-#C4_2
-data="""49
-60 60
-10 14
-3 13
-28 5
-5 8
-14 9
-12 14
-13 10
-3 17
-1 5
-4 1
-18 4
-1 1 
-2 6
-4 14 
-3 18
-4 14
-8 17
-11 5
-9 12
-4 7
-25 8
-7 5
-24 9
-9 14
-12 19
-2 4
-2 7
-3 4
-5 30
-5 3
-10 26
-6 5
-4 9
-1 4
-9 2
-4 17
-5 2
-4 4
-6 2
-4 10
-2 4
-3 12
-6 5
-3 9
-7 18
-6 6
-18 7
-13 9
-25 7"""
+import tkinter as tk
+from matplotlib.figure import Figure 
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk) 
+from tkinter import filedialog
+import os
+import time
 
 class Rectangle:
     def __init__(self, id, width, height):
@@ -425,8 +277,8 @@ class PlacementEngine:
 
     def draw(self, title = None):
         fig, ax = plt.subplots()
-        ax.set_xlim(-5, self.sheet.width * 1.5)  
-        ax.set_ylim(-5, self.sheet.height * 1.5)      
+        ax.set_xlim(0, self.sheet.width)  
+        ax.set_ylim(0, self.sheet.height)      
 
         
         # ax.grid(True)
@@ -496,21 +348,6 @@ def readData(data):
         rectangles.append(Rectangle(i, rectangle[0], rectangle[1]))
     return sheet, rectangles
 
-
-# currentBest = dict([])
-
-# def calcArea():
-#     area = 0
-#     for placement in placements.values():
-#         area += placement.rectangle.area()
-#     return area
-
-# def clonePlacements(palcements):
-#     result = dict([])
-#     for key, value in placements:
-#         result[key] = value.clone()
-#     return result 
-
 currentBest = PlacementEngine(None, [])
 i = 0
 
@@ -532,11 +369,11 @@ def backtrack(engine, rectangles):
                         currentBest = engine.clone()
                     
                     if i % 1000 == 0:
-                        engine.draw(f"{i} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
-                        # print(i, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
+                       engine.draw(f"{i} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
+                       print(i, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
                     i += 1
                     
-                    if i >= 500_000:
+                    if i >= 500_0:
                         return True
 
                     if result:
@@ -556,49 +393,185 @@ def extract_from_file(file_path, file_name):
         data = ' \n'.join(line.strip() for line in file)
     return data
    
+""" GUI"""
+
+
+
+
+# def plot(): 
+
+# 	# the figure that will contain the plot 
+# 	fig = Figure(figsize = (5, 5), 
+# 				dpi = 100) 
+
+# 	# list of squares 
+# 	y = [i**2 for i in range(101)] 
+
+# 	# adding the subplot 
+# 	plot1 = fig.add_subplot(111) 
+
+# 	# plotting the graph 
+# 	plot1.plot(y) 
+
+# 	# creating the Tkinter canvas 
+# 	# containing the Matplotlib figure 
+# 	canvas = FigureCanvasTkAgg(fig, master = lower_frame) 
+# 	canvas.draw() 
+
+# 	# placing the canvas on the Tkinter window 
+# 	canvas.get_tk_widget().pack() 
+
+# 	# creating the Matplotlib toolbar 
+# 	toolbar = NavigationToolbar2Tk(canvas, lower_frame) 
+# 	toolbar.update() 
+
+# 	# placing the toolbar on the Tkinter window 
+# 	canvas.get_tk_widget().pack() 
+
+def print_rectangles():
+    # png to gcla 
+    pass 
+
+
+
+def start():
+    chart_frame1 = tk.Frame(lower_frame) #, bg="#EB2645"
+    #chart_frame1.pack(side="right")  
+    chart_frame1.grid(row=0, column=0, sticky="nsew")
+    
+    chart_frame2 = tk.Frame(lower_frame) #, bg="#235FCA"
+    #chart_frame2.pack(side="left")
+    chart_frame2.grid(row=0, column=1, sticky="nsew")
     
    
+    filename = 'C0_0'
+    file_path = 'original/' + filename
+    data = extract_from_file(file_path, filename)
+    sheet, rectangles = readData(data)
+    rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
+    print(rectangles)
+    engine = PlacementEngine(sheet, rectangles)
+    t = time.process_time()
+    result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+    elapsed_time = time.process_time() - t
+#    print(elapsed_time)
+    # print(result)
+    # print(engine.placements.keys())
+    # print(engine.placements.items())
+    
+    fig = currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
+    #print(currentBest.getUnplacedRectangles())    
+    
+    #Figure 2 için kalanları çizdir.
+    kalan_rectangles = []
+    for x in currentBest.getUnplacedRectangles():
+        kalan_rectangles.append(currentBest.rectangles.get(x))
+    #print(kalan_rectangles)   
+    engine2 = PlacementEngine(sheet, kalan_rectangles)
+    result2 = backtrack(engine2, list(map(lambda x: x.id, kalan_rectangles)))
+    fig2 = engine2.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
+    
+    # fig = Figure(figsize = (5, 5), dpi = 100) 
+    # y = [i**2 for i in range(101)] 
+    # plot1 = fig.add_subplot(111) 
+    # plot1.plot(y) 
+    canvas = FigureCanvasTkAgg(fig, chart_frame1)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side='top', expand=True, padx=10, pady=10)
+    # toolbar = NavigationToolbar2Tk(canvas, chart_frame1)
+    # toolbar.update() 
+    # toolbar.pack(side="bottom")
+    
+    # fig2 = Figure(figsize = (5, 5), dpi = 100) 
+    # y = [i*2 for i in range(101)] 
+    # plot2 = fig2.add_subplot(111) 
+    # plot2.plot(y) 
+    canvas2= FigureCanvasTkAgg(fig2, chart_frame2)
+    canvas2.draw()
+    canvas2.get_tk_widget().pack(side="top", expand=True,  padx=10, pady=10)
+    
+    # toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
+    # toolbar2.update() 
+    # toolbar2.pack(side="bottom")
+
+    
+
+def selectFiles():
+    filename = filedialog.askopenfilename(initialdir = "/home/filiz/Desktop/CDTP/original",
+                                      title = "Select a File",
+                                      filetypes=[("All files", "*")])
+    filepath = filename
+    filename=os.path.basename(filename).split('/')[-1]
+    label_file_explorer.configure(text="File Opened: "+filename)
     
 
 
-# import os
-# import sys
-# path = "/home/filiz/Desktop/CDTP/original/"
+window = tk.Tk() 
+window.title('Cutting Stock Problem Solution') 
+window.geometry("1000x400") 
 
-# results = []
+upper_frame = tk.Frame(window) #, bg="#BD99D9" 
+upper_frame.pack(side="top", fill="x")
 
-# for file in sorted(os.listdir(path)):
-#     data = extract_from_file(path+file, file)
-#     sheet, rectangles = readData(data)
-#     rectangles = sorted(rectangles, key=lambda rect: min(rect.width, rect.height), reverse=True)
+file_select_button = tk.Button(master= upper_frame, 
+                            command= selectFiles, 
+                            height=2, width= 10, 
+                            text = "Select File"
+                            )
 
-    
-#     currentBest = PlacementEngine(None, [])
-#     i = 0
+file_select_button.pack(side="left", padx=25, pady=25)
 
-#     engine = PlacementEngine(sheet, rectangles)
-#     result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+label_file_explorer = tk.Label(upper_frame, 
+                            text = "File Explorer using Tkinter",
+                            width = 40, height = 4, 
+                            fg = "blue")
+label_file_explorer.pack(side="left", padx = 5, pady = 5)
 
-#     results.append((file, currentBest.area(), len(currentBest.getUnplacedRectangles())))
-#     print(f"{file} {currentBest.area()}/{sheet.area()} {len(currentBest.getUnplacedRectangles())}/{len(rectangles)}")
+# plot_button = tk.Button(master = upper_frame, 
+#  					command = plot, 
+#  					height = 2, 
+#  					width = 10, 
+#  					text = "Plot") 
+# plot_button.pack(side="right", padx=20, pady=20) 
 
-#     # area = 0
-#     # for rect in rects:
-#     #     area += rect.area()
-#     # print(file, sheet.height*sheet.width, area, len(rects))
-        
-
-# for result in results:
-#     print(result)
-# sys.exit(0)
-
-    
-# 4 3
-# 2 10
-
-
+start_button = tk.Button(master = upper_frame, 
+ 					command = start, 
+ 					height = 2, 
+ 					width = 10, 
+ 					text = "Start")
+start_button.pack(side="right", padx=20, pady=20) 
 
 
+side_frame = tk.Frame(window) # , bg="#4C2A85"
+side_frame.pack(side="right", fill="y")
+
+print_button = tk.Button(master = side_frame, 
+ 					command = print_rectangles, 
+ 					height = 2, 
+ 					width = 10, 
+ 					text = "Print") 
+print_button.pack(side="bottom", padx=20, pady=20)
+
+
+label = tk.Label(upper_frame, text="0:00", font=25)
+label.pack(side="right", pady=20, padx=20)
+
+
+lower_frame = tk.Frame(window) #turkuasz  , bg="#4EDED6"
+lower_frame.pack(fill='both', expand=True)
+lower_frame.grid_columnconfigure(0, weight=1, uniform="group1")
+lower_frame.grid_columnconfigure(1, weight=1, uniform="group1")
+lower_frame.grid_rowconfigure(0, weight=1)
+
+
+window.mainloop() 
+
+
+
+
+"""
+C0_0 isimli dosyaya erişerek, her döngüde dikdörtgenleri random sırada veriyor ve başarısını kontrol ediyor.
+"""
 # import random
 
 # for j in range(20):
@@ -614,72 +587,32 @@ def extract_from_file(file_path, file_name):
 #     i = 0
 #     currentBest = PlacementEngine(None, [])
 #     result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
-#     currentBest.savePlot(f"plots/{j}.png")
+#     #currentBest.savePlot(f"plots/{j}.png")
 #     print(f"{filename} {i} {currentBest.area()}/{sheet.area()} {len(currentBest.getUnplacedRectangles())}/{len(rectangles)}")
 
 
 
 
-filename = 'C1_1'
-file_path = 'original/' + filename
-data = extract_from_file(file_path, filename)
+"""C0_0 dosyası için çalıştırılması"""
+# filename = 'C0_0'
+# file_path = 'original/' + filename
+# data = extract_from_file(file_path, filename)
+# sheet, rectangles = readData(data)
+# print(sheet, rectangles)
+# # rectangles = sorted(rectangles, key=lambda rect: max(rect.width, rect.height), reverse=True)
+# rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
+# engine = PlacementEngine(sheet, rectangles)
+# import time
+# t = time.process_time()
+# result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
+# elapsed_time = time.process_time() - t
+# print(i, elapsed_time)
+# print(result)
+# print(engine.placements.keys())
+# print(engine.placements.items())
+# engine.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
+# currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
+# for placement in currentBest.placements.values():
+#     print(placement.bottom_left(), placement.top_right())
 
-
-
-sheet, rectangles = readData(data)
-print(sheet, rectangles)
-# rectangles = sorted(rectangles, key=lambda rect: max(rect.width, rect.height), reverse=True)
-rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
-
-# import random
-# random.shuffle(rectangles)
-
-
-
-engine = PlacementEngine(sheet, rectangles)
-
-
-
-import time
-t = time.process_time()
-result = backtrack(engine, list(map(lambda x: x.id, rectangles)))
-elapsed_time = time.process_time() - t
-print(i, elapsed_time)
-
-print(result)
-print(engine.placements.keys())
-print(engine.placements.items())
-    
-    
-engine.draw(f"last - {engine.area()} - {len(engine.getUnplacedRectangles())}")
-currentBest.draw(f"currentBest - {currentBest.area()} - {len(currentBest.getUnplacedRectangles())}")
-
-print(engine.score())
-
-
-for placement in currentBest.placements.values():
-    print(placement.bottom_left(), placement.top_right())
-
-
-
-
-
-# print(engine.place(1, None, Place.TOP, Rotate.ROTATE_0))
-# print(engine.place(2, 1, Place.TOP, Rotate.ROTATE_0))
-# print(engine.place(3, 2, Place.LEFT, Rotate.ROTATE_0))
-# print(engine.place(0, 3, Place.LEFT, Rotate.ROTATE_0))
-# engine.draw()
-# print(engine.placements)
-
-
-# print(engine.place(1, None, Place.TOP, Rotate.ROTATE_90))
-# print(engine.place(3, 1, Place.TOP, Rotate.ROTATE_0))
-# print(engine.place(0, 1, Place.LEFT, Rotate.ROTATE_90))
-# print(engine.placements)
-# engine.draw()
-# print(engine.getUnplacedRectangles())
-# engine.unplace(0)
-# engine.unplace(3)
-# print(engine.getUnplacedRectangles())
-# engine.draw()
 
