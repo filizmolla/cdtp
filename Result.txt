@@ -1,4 +1,4 @@
 <==== RESULTS ====>
-Best minimum no of bins and Bin Efficiency by SFLA (Best Frog):- SheetDetails (Score = 0.037037037037037035, No_of_pieces = 16)
+Best minimum no of bins and Bin Efficiency by SFLA (Best Frog):- SheetDetails (Score = 0.07692307692307693, No_of_pieces = 6)
 <--- Best Frog Bin Solution --->
-Best Frog Order for C1_1 is: [0, 12, 10, 13, 11, 9, 5, 8, 3, 1, 15, 2, 4, 6, 14, 7]
+Best Frog Order for C0_0 is: [1, 4, 5, 0, 3, 2]

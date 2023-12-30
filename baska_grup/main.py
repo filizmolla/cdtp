@@ -9,7 +9,7 @@ from util import plot_configuration, initialize_plot
 if __name__ == "__main__":
 
     # Parameters
-    rects = TestCases.cat1_p2
+    rects = TestCases.cat1_p1
     plotting = False
     container_size = (20,20)
 

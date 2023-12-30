@@ -181,9 +181,9 @@ class SFLA:
         valid_combinations = []
 
         perms = self.permutations_with_constraints(merged, list(constraints.values())) 
-        #if len(perms) == 0:
+        if len(perms) == 0:
             #print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            #return worst_frog_order
+            return worst_frog_order
 
         for perm in perms:
             if len(merged) == len(repeating_indexes):
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     # path = "./../data/bin2data/N2W1B1R7.BPP"
     # path = "./../data/bin2data/N3W1B3R0.BPP"
     # path = "./../data/bin2data/N1W1B1R5.BPP"
-    file_name = 'C1_1'
+    file_name = 'C0_0'
     path = 'original/' + file_name
 
     
