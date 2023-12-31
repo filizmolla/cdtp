@@ -26,7 +26,6 @@ class Rectangle:
         self.height = height 
         self.isRotated = False
         
-    
     def area(self):
         return self.width * self.height
 
@@ -394,7 +393,7 @@ def backtrack(engine, rectangles, context):
                         context.best = engine.clone()
                         
                     # print(context.iteration, context.best.area(), context.best)
-                    if context.iteration % 1000 == 0:
+                    if context.iteration % 10000 == 0:
                         if context.inform_callback != None:
                             context.inform_callback(context.iteration, context.best)
                         #engine.draw(f"{context.iteration} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
@@ -427,23 +426,59 @@ def extract_from_file(file_path, file_name):
 
 
 
+#Coordinates to GCode
 def print_rectangles():
-    # png to gcla 
-    pass 
+    results = []
+    data = rectangles_to_print
+    data = sorted(data, key=lambda position_list: position_list[0].x)    
+    print(', '.join(map(str, rectangles_to_print)))
+    
+    with open("myGCode.gcode", "w") as f:
+        ##ÖNEMLİ DEĞİŞTİRME: G91. Incremental mode.
+        f.write("G21 G91 G94;Start code\n" + 
+                "G00 Z20\nG00 X0 Y0 \nG01 Z-19\nG01 Z-1 F250 ;FEED RATE\nG01 X0 Y0 ;\n" )
+
+            
+        for i in range(len(data)):
+            
+            rectangle_positions = data[i]    
+            current_first_element = data[i][0]
+            if i < len(data) - 1:
+                next_first_element = data[i + 1][0]
+                subtracted_result = Position(next_first_element.x - current_first_element.x, 
+                                             next_first_element.y - current_first_element.y)
+                results.append(subtracted_result)
+
+            
+            for i in range(len(rectangle_positions)):
+                if i == (len(rectangle_positions) - 1):
+                    x1, y1 = rectangle_positions[i].x, rectangle_positions[i].y
+                    x2, y2 = rectangle_positions[0].x, rectangle_positions[0].y
+                else:
+                    x1, y1 = rectangle_positions[i].x, rectangle_positions[i].y
+                    x2, y2 = rectangle_positions[i + 1].x, rectangle_positions[i + 1].y
+                    
+                
+                dx = x2 - x1
+                dy = y2 - y1
+                #print(f"G01 X{dx} Y{dy}; \n")
+
+                f.write(f"G01 X{dx} Y{dy} ;\n")     #KAREYİ ÇİZ
+                
+            f.write(f"G01 Z5;\n")       #ELİNİ KALDIR 
+            f.write(f"G01 X{results[-1].x} Y{results[-1].y};\n") #BAŞKA KAREYE GİT 
+            f.write(f"G01 Z-5; \n") #ELİNİ İNDİR
+        f.write("G00 Z0 F70\n") #ne yapıyorlar bilmiyorum
+        f.write("M30\n")
 
 
-
-
-
-
-# # Means of communication, between the gui & update threads:
-# message_queue = deque()
-
-
+rectangles_to_print= []
 
 
 def start():
-    chart_frame1 = tk.Frame(lower_frame) #, bg="#EB2645"
+    global rectangles_to_print
+    rectangles_to_print= []
+    chart_frame1 = tk.Frame(lower_frame) 
     #chart_frame1.pack(side="right")  
     chart_frame1.grid(row=0, column=0, sticky="nsew")
     
@@ -458,11 +493,9 @@ def start():
     data = extract_from_file(file_path, filename)
     sheet, rectangles = readData(data)
     rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
-    print(rectangles)
+    #print(rectangles)
     engine = PlacementEngine(sheet, rectangles)
     
-    
-        
     # def inform_fn(iteration, best):
     #     fig, ax = best.draw(f"{iteration} - {best.area()} - {len(best.getUnplacedRectangles())}")
     #     def fn():
@@ -486,10 +519,10 @@ def start():
     # print(engine.placements.keys())
     # print(engine.placements.items())
     
-    fig, ax = context.best.draw(f"context.best - {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
-    #print(currentBest.getUnplacedRectangles())    
-    
-
+    fig, ax = context.best.draw(f"Best Solution Area: {context.best.area()}, Remining Rect Count: {len(context.best.getUnplacedRectangles())}")    
+    for placement in context.best.placements.values():
+        print(f"[{placement.bottom_left()}, {placement.top_left()}, {placement.top_right()}, {placement.bottom_right()}]")
+        rectangles_to_print.append([placement.bottom_left(),placement.top_left(), placement.top_right(), placement.bottom_right()])
     
     #Figure 2 için kalanları çizdir.
     kalan_rectangles = []
@@ -499,14 +532,9 @@ def start():
     engine2 = PlacementEngine(sheet, kalan_rectangles)
     context = Context(PlacementEngine(sheet, []))
     result2 = backtrack(engine2, list(map(lambda x: x.id, kalan_rectangles)), context)
-    fig2, ax = context.best.draw(f"last - {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
+    fig2, ax = context.best.draw(f"Remaining Rectangles Area: {context.best.area()} - {len(context.best.getUnplacedRectangles())}")
     
     
-    
-    # fig = Figure(figsize = (5, 5), dpi = 100) 
-    # y = [i**2 for i in range(101)] 
-    # plot1 = fig.add_subplot(111) 
-    # plot1.plot(y) 
     canvas = FigureCanvasTkAgg(fig, chart_frame1)
     canvas.draw()
     canvas.get_tk_widget().pack(side='top', expand=True, fill=tk.BOTH,padx=10, pady=10)
@@ -514,21 +542,18 @@ def start():
     toolbar.update() 
     toolbar.pack(side="bottom")
     
-    # fig2 = Figure(figsize = (5, 5), dpi = 100) 
-    # y = [i*2 for i in range(101)] 
-    # plot2 = fig2.add_subplot(111) 
-    # plot2.plot(y) 
+    
     canvas2= FigureCanvasTkAgg(fig2, chart_frame2)
     canvas2.draw()
     canvas2.get_tk_widget().pack(side="top", expand=True,  fill=tk.BOTH, padx=10, pady=10)
-    
     toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
     toolbar2.update() 
     toolbar2.pack(side="bottom")
+    
 
 
-def startThread():
-    threading.Thread(target=start).start()
+# def startThread():
+#     threading.Thread(target=start).start()
 
 
 
@@ -544,9 +569,9 @@ def selectFiles():
 
 window = tk.Tk() 
 window.title('Cutting Stock Problem Solution') 
-window.geometry("1000x440") 
+window.geometry("1000x580") 
 
-upper_frame = tk.Frame(window) #, bg="#BD99D9" 
+upper_frame = tk.Frame(window) 
 upper_frame.pack(side="top", fill="x")
 
 file_select_button = tk.Button(master= upper_frame, 
@@ -562,13 +587,6 @@ label_file_explorer = tk.Label(upper_frame,
                             width = 40, height = 4, 
                             fg = "blue")
 label_file_explorer.pack(side="left", padx = 5, pady = 5)
-
-# plot_button = tk.Button(master = upper_frame, 
-#  					command = plot, 
-#  					height = 2, 
-#  					width = 10, 
-#  					text = "Plot") 
-# plot_button.pack(side="right", padx=20, pady=20) 
 
 start_button = tk.Button(master = upper_frame, 
  					command = start, 
@@ -594,9 +612,7 @@ clock_label.pack(side="top", pady=20, padx=20)
 
 
 
-
-
-lower_frame = tk.Frame(window) #turkuasz  , bg="#4EDED6"
+lower_frame = tk.Frame(window) 
 lower_frame.pack(fill='both', expand=True)
 lower_frame.grid_columnconfigure(0, weight=1, uniform="group1")
 lower_frame.grid_columnconfigure(1, weight=1, uniform="group1")
