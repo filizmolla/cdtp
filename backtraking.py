@@ -552,7 +552,8 @@ def start():
 
 
 def selectFiles():
-    filename = filedialog.askopenfilename(initialdir = "/home/filiz/Desktop/CDTP/original",
+    current_directory = os.path.dirname(os.path.realpath(__file__))
+    filename = filedialog.askopenfilename(initialdir = current_directory + "/original",
                                       title = "Select a File",
                                       filetypes=[("All files", "*")])
     filepath = filename
