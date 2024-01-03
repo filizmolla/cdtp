@@ -393,9 +393,9 @@ def backtrack(engine, rectangles, context):
                         context.best = engine.clone()
                         
                     # print(context.iteration, context.best.area(), context.best)
-                    if context.iteration % 10000 == 0:
-                        if context.inform_callback != None:
-                            context.inform_callback(context.iteration, context.best)
+                    # if context.iteration % 10000 == 0:
+                    #     if context.inform_callback != None:
+                    #         context.inform_callback(context.iteration, context.best)
                         #engine.draw(f"{context.iteration} - {engine.area()} - {rectangle} {placed} {placement} {rotation}")
                         #print(context.iteration, engine.placements.keys(), rectangles, len(engine.placements.keys()), len(rectangles))
                     
@@ -421,20 +421,21 @@ def extract_from_file(file_path, file_name):
         data = ' \n'.join(line.strip() for line in file)
     return data
    
+    
+   
 """ GUI"""
-
-
-
-
 #Coordinates to GCode
 def print_rectangles():
     results = []
     data = rectangles_to_print
     data = sorted(data, key=lambda position_list: position_list[0].x)    
-    print(', '.join(map(str, rectangles_to_print)))
+    dataset_name = label_file_explorer.cget("text")
+    dataset_name = dataset_name.split()[-1]   
+    file_name = dataset_name + "_GCode.gcode"
     
-    with open("myGCode.gcode", "w") as f:
-        ##ÖNEMLİ DEĞİŞTİRME: G91. Incremental mode.
+    
+    with open(file_name, "w") as f:
+        ##G91. Incremental mode!
         f.write("G21 G91 G94;Start code\n" + 
                 "G00 Z20\nG00 X0 Y0 \nG01 Z-19\nG01 Z-1 F250 ;FEED RATE\nG01 X0 Y0 ;\n" )
 
@@ -470,20 +471,20 @@ def print_rectangles():
             f.write(f"G01 Z-5; \n") #ELİNİ İNDİR
         f.write("G00 Z0 F70\n") #ne yapıyorlar bilmiyorum
         f.write("M30\n")
-
+    print(f"Solution is saved to {file_name}!")
+    print_done_label.config(text=f"Solution \nis \nsaved \nto \n{file_name}")
 
 rectangles_to_print= []
 
 
 def start():
     global rectangles_to_print
+    print_done_label.config(text="")
     rectangles_to_print= []
-    chart_frame1 = tk.Frame(lower_frame) 
-    #chart_frame1.pack(side="right")  
+    chart_frame1 = tk.Frame(lower_frame)
     chart_frame1.grid(row=0, column=0, sticky="nsew")
     
-    chart_frame2 = tk.Frame(lower_frame) #, bg="#235FCA"
-    #chart_frame2.pack(side="left")
+    chart_frame2 = tk.Frame(lower_frame)
     chart_frame2.grid(row=0, column=1, sticky="nsew")
     
    
@@ -493,7 +494,6 @@ def start():
     data = extract_from_file(file_path, filename)
     sheet, rectangles = readData(data)
     rectangles = sorted(rectangles, key=lambda rect: rect.area(), reverse=True)
-    #print(rectangles)
     engine = PlacementEngine(sheet, rectangles)
     
     # def inform_fn(iteration, best):
@@ -521,7 +521,7 @@ def start():
     
     fig, ax = context.best.draw(f"Best Solution Area: {context.best.area()}, Remining Rect Count: {len(context.best.getUnplacedRectangles())}")    
     for placement in context.best.placements.values():
-        print(f"[{placement.bottom_left()}, {placement.top_left()}, {placement.top_right()}, {placement.bottom_right()}]")
+        #print(f"[{placement.bottom_left()}, {placement.top_left()}, {placement.top_right()}, {placement.bottom_right()}]")
         rectangles_to_print.append([placement.bottom_left(),placement.top_left(), placement.top_right(), placement.bottom_right()])
     
     #Figure 2 için kalanları çizdir.
@@ -549,12 +549,6 @@ def start():
     toolbar2 = NavigationToolbar2Tk(canvas2,chart_frame2) 
     toolbar2.update() 
     toolbar2.pack(side="bottom")
-    
-
-
-# def startThread():
-#     threading.Thread(target=start).start()
-
 
 
 def selectFiles():
@@ -596,7 +590,7 @@ start_button = tk.Button(master = upper_frame,
 start_button.pack(side="right", padx=20, pady=20) 
 
 
-side_frame = tk.Frame(window) # , bg="#4C2A85"
+side_frame = tk.Frame(window) 
 side_frame.pack(side="right", fill="y")
 
 print_button = tk.Button(master = side_frame, 
@@ -610,7 +604,8 @@ print_button.pack(side="bottom", padx=20, pady=20)
 clock_label = tk.Label(side_frame, text="0s", font=25)
 clock_label.pack(side="top", pady=20, padx=20)
 
-
+print_done_label = tk.Label(side_frame, fg = "blue")
+print_done_label.pack(side="top", pady=20, padx=20)
 
 lower_frame = tk.Frame(window) 
 lower_frame.pack(fill='both', expand=True)
