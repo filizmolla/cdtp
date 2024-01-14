@@ -1,4 +1,4 @@
-from backtraking import Rectangle, Position, Rotate, Place, Placement, Sheet, PlacementEngine, readData, backtrack, extract_from_file
+from backtraking import Rectangle, Position, Rotate, Place, Placement, Sheet, PlacementEngine, Context, readData, backtrack, extract_from_file
 import os
 import sys
 path = "/home/filiz/Desktop/CDTP/original/"
@@ -9,7 +9,7 @@ for file in sorted(os.listdir(path)):
     data = extract_from_file(path+file, file)
     sheet, rectangles = readData(data)
     rectangles = sorted(rectangles, key=lambda rect: min(rect.width, rect.height), reverse=True)
-
+    context = Context(PlacementEngine(sheet, []))
     
     currentBest = PlacementEngine(None, [])
     i = 0
