@@ -17,6 +17,7 @@ import time
 import tkinter.ttk as ttk
 import threading
 from collections import deque
+plt.switch_backend('agg')
 
 
 class Rectangle:
@@ -24,7 +25,7 @@ class Rectangle:
         self.id = id
         self.width = width 
         self.height = height 
-        self.isRotated = False
+        
         
     def area(self):
         return self.width * self.height
@@ -116,7 +117,6 @@ class PlacementEngine:
         self.sheet = sheet
         self.rectangles = dict(zip(map(lambda x: x.id , rectangles), rectangles))
         self.placements = dict([])
-        self.score#idk
 
     def area(self):
         area = 0
@@ -183,11 +183,6 @@ class PlacementEngine:
             position = Position(0, 0)
             placement = Placement(rect, position, rotation)
             self.placements[rect.id] = placement
-            # print("Place first to origin")
-            if rotation == Rotate.ROTATE_90:
-                rect.isRotated = True
-            else:
-                rect.isRotate = False
             return True
         
         refRectPlacement = self.placements.get(referance_rectangle_id)
@@ -196,18 +191,6 @@ class PlacementEngine:
             
         rectWidth  = rect.width  if rotation == Rotate.ROTATE_0 else rect.height
         rectHeight = rect.height if rotation == Rotate.ROTATE_0 else rect.width
-        
-        #idk:
- #       print(rectWidth, rectHeight)
- #       print(refRectPlacement.rectangle.width, refRectPlacement.rectangle.height, refRectPlacement.rectangle.isRotated)
-        
-        #idk:
-        if refRectPlacement.rectangle.isRotated:
-            refRectangleWidth = refRectPlacement.rectangle.height
-            refRectangleHeight = refRectPlacement.rectangle.width
-        else:
-            refRectangleWidth = refRectPlacement.rectangle.width
-            refRectangleHeight = refRectPlacement.rectangle.height
             
         
             
@@ -222,11 +205,7 @@ class PlacementEngine:
             
             
             placement = Placement(rect, position, rotation, referance_rectangle_id, place)
-            #idk:
-            if rotation == Rotate.ROTATE_0:
-                 rect.isRotated = False
-            else:
-                 rect.isRotated = True
+            
             
             if placement.top_left().y < 0 or placement.bottom_left().y < 0:
                 pass 
@@ -253,13 +232,6 @@ class PlacementEngine:
            
             if placement.top_left().y < 0 or placement.bottom_left().y < 0:
                 pass 
-           
-            #idk:
-            if rotation == Rotate.ROTATE_0:
-                 rect.isRotated = False
-            else:
-                 rect.isRotated = True
-            
             
             if self.checkOverlappingRects(placement):
                 return False
@@ -314,7 +286,7 @@ class PlacementEngine:
                 placement.rectangle.height if placement.rotation == Rotate.ROTATE_0 else placement.rectangle.width,
                 linewidth=1,
                 edgecolor='r',
-                facecolor='#FFE4C4'
+                facecolor='#FFE4C4' 
                 )
             ax.add_patch(rect)
             
@@ -322,29 +294,14 @@ class PlacementEngine:
             plt.title(title)
             
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
+        #plt.show()
         return fig, ax
     
     def savePlot(self, filename):
         fig, ax = self.draw()
         fig.savefig(filename, bbox_inches='tight')
 
-        
-    def score(self):
-        a = list(self.placements.keys())
-        b = list(range(len(self.rectangles)))        
-        difference = list(set(b) - set(a))
-        # print(difference)
-        total_area = 0
-        for indis in difference:
-            missing = self.rectangles.get(indis)
-            area = missing.height * missing.width
-            total_area += area 
-        #print(area, total_area)
-        if total_area == 0:
-            total_area = 1
-        
-        return 1/ total_area
+    
         
 
 def readData(data):
@@ -426,18 +383,24 @@ def extract_from_file(file_path, file_name):
 """ GUI"""
 #Coordinates to GCode
 def print_rectangles():
+    SCALE_FACTOR = 4
     results = []
     data = rectangles_to_print
     data = sorted(data, key=lambda position_list: position_list[0].x)    
     dataset_name = label_file_explorer.cget("text")
     dataset_name = dataset_name.split()[-1]   
     file_name = dataset_name + "_GCode.gcode"
-    
+    if file_name[:2] == 'C1':
+        rec_width = 20
+        rec_height = 20
     
     with open(file_name, "w") as f:
         ##G91. Incremental mode!
         f.write("G21 G91 G94;Start code\n" + 
-                "G00 Z20\nG00 X0 Y0 \nG01 Z-19\nG01 Z-1 F250 ;FEED RATE\nG01 X0 Y0 ;\n" )
+                "M3 S90\nG00 X0 Y0 \nM3 S250\n")
+        if rec_height != None and rec_width != None:
+            f.write(f"G01 X0 Y0 F250;\nG01 X0 Y{rec_height*SCALE_FACTOR};Outer Rec Height\nG01 X{rec_width*SCALE_FACTOR} Y0 ;Outer Rectangle Width\nG01 X0 Y-{rec_height*SCALE_FACTOR} ;Outer Rectangle Height\nG01 X-{rec_width*SCALE_FACTOR} Y0 ;Outer Rectangle Width\n")
+        f.write("G01 X0 Y0 ;\n" )
 
             
         for i in range(len(data)):
@@ -460,17 +423,17 @@ def print_rectangles():
                     x2, y2 = rectangle_positions[i + 1].x, rectangle_positions[i + 1].y
                     
                 
-                dx = x2 - x1
-                dy = y2 - y1
+                dx = (x2 - x1)*SCALE_FACTOR
+                dy = (y2 - y1)*SCALE_FACTOR
                 #print(f"G01 X{dx} Y{dy}; \n")
 
                 f.write(f"G01 X{dx} Y{dy} ;\n")     #KAREYİ ÇİZ
                 
-            f.write(f"G01 Z5;\n")       #ELİNİ KALDIR 
-            f.write(f"G01 X{results[-1].x} Y{results[-1].y};\n") #BAŞKA KAREYE GİT 
-            f.write(f"G01 Z-5; \n") #ELİNİ İNDİR
-        f.write("G00 Z0 F70\n") #ne yapıyorlar bilmiyorum
-        f.write("M30\n")
+            f.write(f"M3 S90;\n")       #ELİNİ KALDIR 
+            f.write(f"G01 X{results[-1].x*SCALE_FACTOR} Y{results[-1].y*SCALE_FACTOR};\n") #BAŞKA KAREYE GİT 
+            f.write(f"M3 S250; \n") #ELİNİ İNDİR
+        f.write("M3 S90\n") # en son elini kaldırsın
+        f.write("G21G90 G0Z5\nG90 G0 X0 Y0\nG90 G0 Z0\nM30\n")
     print(f"Solution is saved to {file_name}!")
     print_done_label.config(text=f"Solution \nis \nsaved \nto \n{file_name}")
 
