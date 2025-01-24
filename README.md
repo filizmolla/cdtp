@@ -6,7 +6,7 @@ Bu dönemin problemi, 2D Strip Packing problemidir. Kargo taşıyon kişiler, fa
 
 # Çözüm 
 Bu çözümde backtracking algoritması kullanılmıştır. Proje Python ile yazılmıştır. Tkinter kullanarak bir arayüz tasarlanmıştır. 
-original klasöründeki dosyalar farklı boyutlarda 
+original klasöründeki dosyalarda farklı kare boyutlarıyla problem örnekleri yer almaktadır. Bir dosyada önce büyük karenin boyutu, kaç karenin yerleştirilmesi gerektiği ve sonra küçük karelerin boyutları yer almaktadır.
 Kullanıcı farklı boyutta karelerin bulunduğu dosyayı seçer. Program, bu dosyayı girdi olarak alır, bu kareler en büyük kareye yerleştirilir, sonucunda oluşan optimum durumu arayüzden görülmektedir. 
 Ayrıca sonuçları robot kol makineye göndermek için GCODE dosyaları oluşturmaktadır.
 
